@@ -120,6 +120,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
                     <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="driver">Driver</SelectItem>
                     <SelectItem value="hotel">Hotel Owner</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
