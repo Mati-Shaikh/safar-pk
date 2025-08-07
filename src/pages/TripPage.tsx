@@ -36,7 +36,7 @@ import {
   X
 } from 'lucide-react';
 
-// Mock data for Pakistan trips
+// New Mock Data
 const pakistanTrips = [
   {
     id: 1,
