@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Destination, Hotel, Driver, Trip, Booking } from '@/types';
+import { Destination, Hotel, Driver, Trip, Booking, ItineraryDay } from '@/types';
 
 interface DataContextType {
   destinations: Destination[];
@@ -65,7 +65,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [bookings, setBookings] = useState<Booking[]>([]);
 
   const initializeData = () => {
-    // Initialize with mock data if not exists
     const storedDestinations = localStorage.getItem('safarpk_destinations');
     if (!storedDestinations) {
       localStorage.setItem('safarpk_destinations', JSON.stringify(mockDestinations));
@@ -74,7 +73,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setDestinations(JSON.parse(storedDestinations));
     }
 
-    // Load other data
     setHotels(JSON.parse(localStorage.getItem('safarpk_hotels') || '[]'));
     setDrivers(JSON.parse(localStorage.getItem('safarpk_drivers') || '[]'));
     setTrips(JSON.parse(localStorage.getItem('safarpk_trips') || '[]'));
@@ -86,6 +84,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...tripData,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
+      status: 'upcoming', // Default status for new trips
     };
     
     const updatedTrips = [...trips, newTrip];
