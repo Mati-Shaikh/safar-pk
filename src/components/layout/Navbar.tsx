@@ -43,7 +43,7 @@ export const Navbar: React.FC = () => {
                   Destinations
                 </Link>
                 <Link to="/trip" className="text-gray-700 hover:text-primary transition-colors">
-                  Trip
+                  My Trips
                 </Link>
               </>
             )}
@@ -64,12 +64,7 @@ export const Navbar: React.FC = () => {
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center space-x-4">
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">
-                    Login
-                  </Button>
-                </Link>
+              <div className="flex items-center space-x-8">
                 <Link to="/signup">
                   <Button size="sm">
                     Sign Up
@@ -144,11 +139,6 @@ export const Navbar: React.FC = () => {
                 </div>
               ) : (
                 <div className="px-3 py-2 space-y-2">
-                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full">
-                      Login
-                    </Button>
-                  </Link>
                   <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
                     <Button size="sm" className="w-full">
                       Sign Up

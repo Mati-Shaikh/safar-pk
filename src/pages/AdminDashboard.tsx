@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useData } from '@/contexts/DataContext';
 import { Users, MapPin, Building, Car, BarChart3, Settings } from 'lucide-react';
+import Footer from '@/components/layout/Footer';
 
 export const AdminDashboard: React.FC = () => {
   const { destinations, trips, bookings } = useData();
@@ -25,6 +26,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   return (
+    <>
     <div className="max-w-7xl mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -274,5 +276,7 @@ export const AdminDashboard: React.FC = () => {
         </TabsContent>
       </Tabs>
     </div>
+    <Footer />
+    </>
   );
 };

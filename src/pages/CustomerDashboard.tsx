@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import Footer from '@/components/layout/Footer';
 
 interface ItinerarySlot {
   id: number;
@@ -272,6 +273,7 @@ export const CustomerDashboard: React.FC<{
   );
 
   return (
+    <>
     <div className="max-w-7xl mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Welcome back, {user?.name}!</h1>
@@ -355,6 +357,8 @@ export const CustomerDashboard: React.FC<{
         </TabsContent>
       </Tabs>
     </div>
+    <Footer />
+    </>
   );
 };
 

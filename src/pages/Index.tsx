@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Star, MapPin, Users, Calendar, ArrowRight, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Footer from '@/components/layout/Footer';
 
 const destinations = [
   {
@@ -84,6 +85,7 @@ const stats = [
 
 const Index = () => {
   return (
+    <>
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -197,28 +199,10 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="max-w-4xl mx-auto text-center px-4">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Start Your Adventure?
-          </h2>
-          <p className="text-xl mb-8 text-gray-200">
-            Join thousands of travelers who have discovered Pakistan's beauty with SafarPk
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/destinations">
-              <Button size="lg" className="bg-yellow-400 text-black hover:bg-yellow-300 text-lg px-8 py-3">
-                Get Started Today
-              </Button>
-            </Link>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black text-lg px-8 py-3">
-              Contact Us
-            </Button>
-          </div>
-        </div>
-      </section>
+     
     </div>
+    <Footer />
+    </>
   );
 };
 

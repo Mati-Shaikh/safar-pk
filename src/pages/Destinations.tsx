@@ -31,6 +31,7 @@ import {
   Camera,
   X
 } from 'lucide-react';
+import Footer from '@/components/layout/Footer';
 
 // Same destinations data from TripPage
 const pakistanTrips = [
@@ -144,6 +145,7 @@ const Destinations = () => {
   }, [searchTerm, selectedCategory]);
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-black via-gray-800 to-black text-white">
@@ -245,110 +247,108 @@ const Destinations = () => {
                   </div>
                   
                   <Dialog>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setSelectedTrip(trip)}
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        View Details
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle className="text-2xl text-gray-800">{trip.name}</DialogTitle>
-                        <DialogDescription>{trip.description}</DialogDescription>
-                      </DialogHeader>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <img 
-                            src={trip.image} 
-                            alt={trip.name} 
-                            className="w-full h-64 object-cover rounded-lg" 
-                          />
-                        </div>
-                        
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="text-center p-3 bg-gray-50 rounded-lg">
-                              <Calendar className="h-6 w-6 mx-auto mb-2 text-gray-600" />
-                              <div className="font-semibold">{trip.duration}</div>
-                              <div className="text-sm text-gray-600">Duration</div>
-                            </div>
-                            <div className="text-center p-3 bg-gray-50 rounded-lg">
-                              <Users className="h-6 w-6 mx-auto mb-2 text-gray-600" />
-                              <div className="font-semibold">{trip.groupSize}</div>
-                              <div className="text-sm text-gray-600">Group Size</div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <Star className="h-5 w-5 fill-yellow-400 text-yellow-400 mr-2" />
-                              <span className="font-semibold">{trip.rating}/5</span>
-                              <span className="text-gray-500 ml-2">({trip.reviews} reviews)</span>
-                            </div>
-                            <Badge className={`${
-                              trip.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
-                              trip.difficulty === 'Moderate' ? 'bg-yellow-100 text-yellow-800' :
-                              trip.difficulty === 'Challenging' ? 'bg-orange-100 text-orange-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {trip.difficulty}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-6">
-                        <div>
-                          <h4 className="font-semibold text-lg text-gray-800 mb-3">Destinations</h4>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {trip.destinations.map((dest, index) => (
-                              <Badge key={index} variant="outline" className="justify-center p-2">
-                                <MapPin className="h-3 w-3 mr-1" />
-                                {dest}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-semibold text-lg text-gray-800 mb-3">Trip Highlights</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {trip.highlights.map((highlight, index) => (
-                              <div key={index} className="flex items-center p-2 bg-gray-50 rounded-lg">
-                                <Camera className="h-4 w-4 text-gray-600 mr-2" />
-                                <span className="text-sm">{highlight}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <DialogFooter className="flex-col sm:flex-row gap-2 pt-6">
-                        <div className="flex items-center justify-between w-full">
-                          <div>
-                            <span className="text-3xl font-bold text-gray-800">{trip.price}</span>
-                            <span className="text-gray-500 ml-2">per person</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" className="border-gray-300">
-                              <Plane className="mr-2 h-4 w-4" />
-                              Book Now
-                            </Button>
-                            <Button className="bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800">
-                              <Mountain className="mr-2 h-4 w-4" />
-                              Explore More
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+  <DialogTrigger asChild>
+    <Button 
+      variant="outline" 
+      size="sm"
+      className="border-gray-300 text-gray-700 hover:bg-gray-50"
+      onClick={() => setSelectedTrip(trip)}
+    >
+      <Eye className="mr-2 h-4 w-4" />
+      View Details
+    </Button>
+  </DialogTrigger>
+
+  <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl lg:max-w-4xl px-4 sm:px-6 py-6">
+    <DialogHeader>
+      <DialogTitle className="text-lg sm:text-2xl text-gray-800">{trip.name}</DialogTitle>
+      <DialogDescription className="text-sm sm:text-base">{trip.description}</DialogDescription>
+    </DialogHeader>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      <img 
+        src={trip.image} 
+        alt={trip.name} 
+        className="w-full h-48 sm:h-64 object-cover rounded-lg" 
+      />
+      
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <Calendar className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 text-gray-600" />
+            <div className="font-semibold text-sm sm:text-base">{trip.duration}</div>
+            <div className="text-xs text-gray-600">Duration</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 text-gray-600" />
+            <div className="font-semibold text-sm sm:text-base">{trip.groupSize}</div>
+            <div className="text-xs text-gray-600">Group Size</div>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center">
+            <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-yellow-400 text-yellow-400 mr-1" />
+            <span className="font-semibold text-sm sm:text-base">{trip.rating}/5</span>
+            <span className="text-gray-500 text-xs sm:text-sm ml-2">({trip.reviews} reviews)</span>
+          </div>
+          <Badge className={`text-xs sm:text-sm ${
+            trip.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
+            trip.difficulty === 'Moderate' ? 'bg-yellow-100 text-yellow-800' :
+            trip.difficulty === 'Challenging' ? 'bg-orange-100 text-orange-800' :
+            'bg-red-100 text-red-800'
+          }`}>
+            {trip.difficulty}
+          </Badge>
+        </div>
+      </div>
+    </div>
+    
+    <div className="space-y-6 mt-6">
+      <div>
+        <h4 className="font-semibold text-base sm:text-lg text-gray-800 mb-2">Destinations</h4>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          {trip.destinations.map((dest, index) => (
+            <Badge key={index} variant="outline" className="flex items-center justify-center text-xs p-2">
+              <MapPin className="h-3 w-3 mr-1" />
+              {dest}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-semibold text-base sm:text-lg text-gray-800 mb-2">Trip Highlights</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {trip.highlights.map((highlight, index) => (
+            <div key={index} className="flex items-center p-2 bg-gray-50 rounded-lg text-sm">
+              <Camera className="h-4 w-4 text-gray-600 mr-2" />
+              <span>{highlight}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <DialogFooter className="pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="text-center sm:text-left">
+        <span className="text-xl sm:text-2xl font-bold text-gray-800">{trip.price}</span>
+        <span className="text-gray-500 ml-1 text-sm">per person</span>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <Button variant="outline" className="w-full sm:w-auto border-gray-300 text-sm">
+          <Plane className="mr-2 h-4 w-4" />
+          Book Now
+        </Button>
+        <Button className="w-full sm:w-auto bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800 text-sm">
+          <Mountain className="mr-2 h-4 w-4" />
+          Explore More
+        </Button>
+      </div>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
                 </div>
               </CardContent>
             </Card>
@@ -384,6 +384,8 @@ const Destinations = () => {
         </div>
       </section>
     </div>
+    <Footer />
+    </>
   );
 };
 

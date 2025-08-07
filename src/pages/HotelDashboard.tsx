@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Building, Calendar, User, Mail, Bed } from 'lucide-react';
+import Footer from '@/components/layout/Footer';
 
 export const HotelDashboard: React.FC = () => {
   const { bookings, updateBooking } = useData();
@@ -19,6 +20,7 @@ export const HotelDashboard: React.FC = () => {
   };
 
   return (
+    <>
     <div className="max-w-7xl mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Hotel Dashboard</h1>
@@ -219,5 +221,7 @@ export const HotelDashboard: React.FC = () => {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 };

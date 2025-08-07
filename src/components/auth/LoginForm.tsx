@@ -30,12 +30,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
   const { login, register } = useAuth();
   const { toast } = useToast();
 
-  // Set signup mode if accessed from signup route
   useEffect(() => {
-    if (location.pathname === '/signup') {
-      setIsLogin(false);
-    }
+    setIsLogin(location.pathname === '/login');
   }, [location.pathname]);
+
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,15 +80,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
       <div className="w-full max-w-md">
-        {/* Back to Home Button */}
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/')}
-          className="mb-4 flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Home
-        </Button>
         
         <Card>
           <CardHeader className="text-center">
