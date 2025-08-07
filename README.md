@@ -1,128 +1,73 @@
-# SafarPk - Pakistan's Premier Travel Platform
+# Welcome to your Lovable project
 
-A beautiful and modern travel platform showcasing Pakistan's most stunning destinations with comprehensive booking and management capabilities.
+## Project info
 
-## 🌟 Features
+**URL**: https://lovable.dev/projects/1029ba20-942e-401d-9131-5ccb57615564
 
-### Beautiful Landing Page
-- **Hero Section**: Stunning full-screen hero with gradient background and call-to-action buttons
-- **Destinations Showcase**: Interactive cards displaying popular Pakistani destinations
-  - Hunza Valley
-  - Swat Valley  
-  - Skardu
-  - Naran Kaghan
-- **Testimonials**: Customer reviews with ratings and avatars
-- **Statistics**: Impressive stats showing platform success
-- **Responsive Design**: Mobile-first approach with beautiful animations
+## How can I edit this code?
 
-### Authentication System
-- **Login/Signup**: Seamless authentication with role-based access
-- **User Roles**: Customer, Driver, Hotel Owner, Admin
-- **Protected Routes**: Role-specific dashboards
-- **Modern UI**: Clean, accessible forms with validation
+There are several ways of editing your application.
 
-### Navigation
-- **Sticky Navbar**: Always accessible navigation
-- **Mobile Responsive**: Hamburger menu for mobile devices
-- **Dynamic Content**: Shows different options based on authentication status
+**Use Lovable**
 
-## 🚀 Getting Started
+Simply visit the [Lovable Project](https://lovable.dev/projects/1029ba20-942e-401d-9131-5ccb57615564) and start prompting.
 
-### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
+Changes made via Lovable will be committed automatically to this repo.
 
-### Installation
+**Use your preferred IDE**
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd safar-pk
-```
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-2. Install dependencies:
-```bash
-npm install
-```
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-3. Start the development server:
-```bash
+Follow these steps:
+
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
+npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+**Edit a file directly in GitHub**
 
-## 🎨 Design Features
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-### Landing Page Sections
-1. **Hero Section**: Full-screen gradient with background image
-2. **Statistics**: Key metrics display
-3. **Destinations**: Interactive cards with hover effects
-4. **Testimonials**: Customer feedback with star ratings
-5. **Call-to-Action**: Final conversion section
+**Use GitHub Codespaces**
 
-### UI Components
-- Built with **Shadcn/ui** components
-- **Tailwind CSS** for styling
-- **Lucide React** for icons
-- **Framer Motion** for animations
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## 🔐 Authentication
+## What technologies are used for this project?
 
-### User Roles
-- **Customer**: Book trips, view itineraries
-- **Driver**: Manage bookings, vehicle information
-- **Hotel Owner**: Manage hotel listings, bookings
-- **Admin**: Platform management, analytics
+This project is built with:
 
-### Features
-- Email/password authentication
-- Role-based routing
-- Session management
-- Form validation
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
 
-## 📱 Responsive Design
+## How can I deploy this project?
 
-The application is fully responsive with:
-- Mobile-first approach
-- Tablet and desktop optimizations
-- Touch-friendly interactions
-- Adaptive layouts
+Simply open [Lovable](https://lovable.dev/projects/1029ba20-942e-401d-9131-5ccb57615564) and click on Share -> Publish.
 
-## 🛠️ Tech Stack
+## Can I connect a custom domain to my Lovable project?
 
-- **Frontend**: React 18, TypeScript
-- **Styling**: Tailwind CSS, Shadcn/ui
-- **Routing**: React Router DOM
-- **State Management**: React Context
-- **Backend**: Supabase
-- **Build Tool**: Vite
+Yes, you can!
 
-## 🎯 Key Features
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-### For Travelers
-- Browse beautiful destinations
-- Read authentic reviews
-- Easy booking process
-- Multiple user roles
-
-### For Businesses
-- Hotel management system
-- Driver booking platform
-- Admin dashboard
-- Analytics and reporting
-
-## 🌟 Highlights
-
-- **Beautiful UI/UX**: Modern, clean design with smooth animations
-- **Pakistan Focused**: Showcases the best of Pakistan's tourism
-- **Professional**: Enterprise-grade authentication and routing
-- **Scalable**: Well-structured codebase for future enhancements
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-**SafarPk** - Discover Pakistan's hidden gems with confidence and style! 🇵🇰
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)

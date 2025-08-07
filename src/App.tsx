@@ -11,10 +11,7 @@ import { CustomerDashboard } from "./pages/CustomerDashboard";
 import { DriverDashboard } from "./pages/DriverDashboard";
 import { HotelDashboard } from "./pages/HotelDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
-import Index from "./pages/Index";
-import Destinations from "./pages/Destinations";
 import NotFound from "./pages/NotFound";
-import TripPage from "./pages/TripPage";
 
 const queryClient = new QueryClient();
 
@@ -32,37 +29,11 @@ const AppContent = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Index />} />
-        <Route path="/destinations" element={<Destinations />} />
-        <Route path="/login" element={<LoginForm onToggleMode={() => {}} />} />
-        <Route path="/signup" element={<LoginForm onToggleMode={() => {}} />} />
-        <Route path="/trip" element={<TripPage />} />
-        
-        {/* Protected routes */}
-        {user && (
-          <>
-            <Route path="/dashboard" element={getDashboard()} />
-            <Route path="/customer" element={<CustomerDashboard />} />
-            <Route path="/driver" element={<DriverDashboard />} />
-            <Route path="/hotel" element={<HotelDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-          </>
-        )}
-        
-        {/* Fallback */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </div>
-  );
+  if (!user) {
+    return <LoginForm onToggleMode={() => {}} />;
+  }
 
-  function getDashboard() {
-    if (!user) return <Index />;
-    
+  const getDashboard = () => {
     switch (user.role) {
       case 'customer':
         return <CustomerDashboard />;
@@ -75,23 +46,28 @@ const AppContent = () => {
       default:
         return <NotFound />;
     }
-  }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      {getDashboard()}
+    </div>
+  );
 };
 
 const App = () => (
-  <BrowserRouter>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthProvider>
-          <DataProvider>
-            <AppContent />
-          </DataProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </BrowserRouter>
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <AuthProvider>
+        <DataProvider>
+          <AppContent />
+        </DataProvider>
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
 );
 
 export default App;
