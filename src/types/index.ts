@@ -3,6 +3,8 @@ export interface User {
   email: string;
   name: string;
   role: 'customer' | 'driver' | 'hotel' | 'admin';
+  phone?: string;
+  address?: string;
   createdAt: string;
 }
 
@@ -52,6 +54,20 @@ export interface Destination {
   popularity: number;
 }
 
+export interface ItinerarySlot {
+  id: number;
+  startTime: string;
+  endTime: string;
+  activity: string;
+  transportNeeded: boolean;
+  notes: string;
+}
+
+export interface ItineraryDay {
+  date: string;
+  slots: ItinerarySlot[];
+}
+
 export interface Trip {
   id: string;
   customerId: string;
@@ -63,17 +79,10 @@ export interface Trip {
   hotelId?: string;
   driverId?: string;
   needsCar: boolean;
-  itinerary: ItineraryItem[];
-  status: 'draft' | 'booked' | 'completed' | 'cancelled';
+  carType?: string;
+  itinerary: ItineraryDay[];
+  status: 'draft' | 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   createdAt: string;
-}
-
-export interface ItineraryItem {
-  id: string;
-  day: number;
-  time: string;
-  activity: string;
-  location: string;
 }
 
 export interface Booking {
