@@ -114,7 +114,7 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile/Tablet Navigation */}
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
@@ -141,6 +141,43 @@ export const Navbar: React.FC = () => {
                   >
                     Trip
                   </Link>
+                  <Link 
+                    to="/map" 
+                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Map
+                  </Link>
+
+                  {/* Extra Links for mobile/tablet */}
+                  <Link 
+                    to="/driver" 
+                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Driver
+                  </Link>
+                  <Link 
+                    to="/hotel" 
+                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Hotel
+                  </Link>
+                  <Link 
+                    to="/signup" 
+                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                  <Link 
+                    to="/admin" 
+                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Admin
+                  </Link>
                 </>
               )}
               
@@ -164,15 +201,7 @@ export const Navbar: React.FC = () => {
                     Logout
                   </Button>
                 </div>
-              ) : (
-                <div className="px-3 py-2 space-y-2">
-                  <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
-                    <Button size="sm" className="w-full">
-                      Sign Up
-                    </Button>
-                  </Link>
-                </div>
-              )}
+              ) : null}
             </div>
           </div>
         )}
