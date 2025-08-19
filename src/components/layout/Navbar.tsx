@@ -3,12 +3,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { MapPin, LogOut, User, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -51,9 +45,6 @@ export const Navbar: React.FC = () => {
                 <Link to="/trip" className="text-gray-700 hover:text-primary transition-colors">
                   My Trips
                 </Link>
-                <Link to="/map" className="text-gray-700 hover:text-primary transition-colors">
-                  Map
-                </Link>
               </>
             )}
           </div>
@@ -73,31 +64,13 @@ export const Navbar: React.FC = () => {
                 </Button>
               </div>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:bg-gray-100 focus:outline-none"
-                  >
-                    <Menu className="h-6 w-6" />
+              <div className="flex items-center space-x-8">
+                <Link to="/signup">
+                  <Button size="sm">
+                    Sign Up
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link to="/driver">Driver</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/hotel">Hotel</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/signup">Sign Up</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin">Admin</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </Link>
+              </div>
             )}
           </div>
 
@@ -107,7 +80,7 @@ export const Navbar: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={toggleMenu}
-              className="p-2 hover:bg-gray-100 focus:outline-none"
+              className="p-2"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>

@@ -15,7 +15,6 @@ import Index from "./pages/Index";
 import Destinations from "./pages/Destinations";
 import NotFound from "./pages/NotFound";
 import TripPage from "./pages/TripPage";
-import Map from "./pages/MapManager";
 
 const queryClient = new QueryClient();
 
@@ -43,19 +42,17 @@ const AppContent = () => {
         <Route path="/login" element={<LoginForm onToggleMode={() => {}} />} />
         <Route path="/signup" element={<LoginForm onToggleMode={() => {}} />} />
         <Route path="/trip" element={<TripPage />} />
-        <Route path="/map" element={<Map />} />
         
         {/* Protected routes */}
-        
+        {user && (
           <>
             <Route path="/dashboard" element={getDashboard()} />
             <Route path="/customer" element={<CustomerDashboard />} />
             <Route path="/driver" element={<DriverDashboard />} />
             <Route path="/hotel" element={<HotelDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            
           </>
-      
+        )}
         
         {/* Fallback */}
         <Route path="*" element={<NotFound />} />

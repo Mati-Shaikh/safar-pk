@@ -138,8 +138,6 @@ interface ItinerarySlot {
   activity: string;
   location: string;
   transportNeeded: boolean;
-  hotelRoomNeeded: boolean;
-  hotelDetails: string;
   notes: string;
 }
 
@@ -150,14 +148,6 @@ interface ItineraryDay {
 
 const CAR_TYPES = ["Sedan", "SUV", "Van", "Coaster", "4WD"];
 const TRIP_CATEGORIES = ["All", "Adventure", "Cultural", "Desert", "Nature", "Trekking"];
-const HOTEL_OPTIONS = [
-  "Serena Hotel, Islamabad",
-  "PC Hotel, Lahore",
-  "Movenpick, Karachi",
-  "Serena Hotel, Gilgit",
-  "Shangrila Resort, Skardu",
-  "Hunza Serena Inn",
-];
 
 // Itinerary Day Card Component
 const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
@@ -169,8 +159,6 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
       activity: '',
       location: '',
       transportNeeded: false,
-      hotelRoomNeeded: false,
-      hotelDetails: '',
       notes: ''
     };
     updateItinerary(dayIndex, [...day.slots, newSlot]);
@@ -217,7 +205,7 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+                className="absolute top-2 right-2 text-gray-500 hover:text-red-500" 
                 onClick={() => removeSlot(slot.id)}
               >
                 <Trash2 className="h-4 w-4" />
@@ -288,49 +276,19 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
                 />
               </div>
 
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`transport-${slot.id}`} 
-                    checked={slot.transportNeeded} 
-                    onCheckedChange={checked => updateSlot(slot.id, 'transportNeeded', !!checked)} 
-                  />
-                  <Label htmlFor={`transport-${slot.id}`} className="text-gray-700">
-                    Transportation Required
-                  </Label>
-                  {slot.transportNeeded && (
-                    <Car className="h-4 w-4 text-gray-600 ml-2" />
-                  )}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`hotel-${slot.id}`} 
-                    checked={slot.hotelRoomNeeded} 
-                    onCheckedChange={checked => updateSlot(slot.id, 'hotelRoomNeeded', !!checked)} 
-                  />
-                  <Label htmlFor={`hotel-${slot.id}`} className="text-gray-700">
-                    Hotel Room
-                  </Label>
-                </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`transport-${slot.id}`} 
+                  checked={slot.transportNeeded} 
+                  onCheckedChange={checked => updateSlot(slot.id, 'transportNeeded', !!checked)} 
+                />
+                <Label htmlFor={`transport-${slot.id}`} className="text-gray-700">
+                  Transportation Required
+                </Label>
+                {slot.transportNeeded && (
+                  <Car className="h-4 w-4 text-gray-600 ml-2" />
+                )}
               </div>
-              {slot.hotelRoomNeeded && (
-                <div className="space-y-2 mt-4">
-                  <Label className="text-gray-700 font-medium">Hotel Details</Label>
-                  <Select 
-                    onValueChange={val => updateSlot(slot.id, 'hotelDetails', val)} 
-                    value={slot.hotelDetails}
-                  >
-                    <SelectTrigger className="border-gray-300 focus:border-gray-600">
-                      <SelectValue placeholder="Select a hotel" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {HOTEL_OPTIONS.map(hotel => (
-                        <SelectItem key={hotel} value={hotel}>{hotel}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
             </div>
           ))}
           
@@ -355,7 +313,6 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
     </Card>
   );
 };
-
 
 const TripDetailsStep = ({ tripForm, setTripForm, handleNextStep }) => (
     <div className="space-y-6">
@@ -428,14 +385,14 @@ const TripDetailsStep = ({ tripForm, setTripForm, handleNextStep }) => (
         />
       </div>
 
-      {/* <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="needsCar" 
           checked={tripForm.needsCar} 
           onCheckedChange={(checked) => setTripForm(prev => ({ ...prev, needsCar: !!checked }))} 
         />
         <Label htmlFor="needsCar" className="text-gray-800">Do you need transportation during your trip?</Label>
-      </div> */}
+      </div>
 
       {tripForm.needsCar && (
         <div className="space-y-2">
@@ -549,17 +506,10 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => (
                   ) : (
                     <ul className="space-y-1">
                       {day.slots.map(slot => (
-                        <li key={slot.id} className="text-sm text-gray-600 flex items-start">
-                          <Clock className="h-3 w-3 mr-2 mt-1" />
-                          <div>
-                            {slot.startTime} - {slot.endTime}: {slot.activity} at {slot.location}
-                            {slot.transportNeeded && <Car className="inline h-3 w-3 ml-2" />}
-                            {slot.hotelRoomNeeded && 
-                              <div className="text-xs text-gray-500 pl-5">
-                                Hotel: {slot.hotelDetails || 'Not specified'}
-                              </div>
-                            }
-                          </div>
+                        <li key={slot.id} className="text-sm text-gray-600 flex items-center">
+                          <Clock className="h-3 w-3 mr-2" />
+                          {slot.startTime} - {slot.endTime}: {slot.activity} at {slot.location}
+                          {slot.transportNeeded && <Car className="inline h-3 w-3 ml-2" />}
                         </li>
                       ))}
                     </ul>
@@ -877,7 +827,7 @@ export default function TripsPage() {
                                 trip.difficulty === 'Moderate' ? 'bg-yellow-100 text-yellow-800' :
                                 trip.difficulty === 'Challenging' ? 'bg-orange-100 text-orange-800' :
                                 'bg-red-100 text-red-800'
-                              }`}> 
+                              }`}>
                                 {trip.difficulty}
                               </Badge>
                             </div>
