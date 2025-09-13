@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types';
-import { supabase } from '@/lib/supabase';
-import { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
@@ -33,112 +31,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await fetchUserData(session.user);
+    // Check localStorage for existing user data on app start
+    const initializeAuth = () => {
+      try {
+        const storedUser = localStorage.getItem('safarPk_user');
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Error loading user from localStorage:', error);
+        localStorage.removeItem('safarPk_user');
       }
       setIsLoading(false);
     };
 
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          await fetchUserData(session.user);
-        } else {
-          setUser(null);
-        }
-        setIsLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    initializeAuth();
   }, []);
 
-  const fetchUserData = async (supabaseUser: SupabaseUser) => {
+  // Helper function to save user to localStorage
+  const saveUserToStorage = (userData: User) => {
     try {
-      // Try to fetch user data from the appropriate table based on role
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-
-      if (customerData) {
-        setUser({
-          id: supabaseUser.id,
-          email: supabaseUser.email!,
-          name: customerData.name,
-          role: 'customer',
-          phone: customerData.phone,
-          address: customerData.address,
-          createdAt: customerData.created_at
-        });
-        return;
-      }
-
-      const { data: adminData } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-
-      if (adminData) {
-        setUser({
-          id: supabaseUser.id,
-          email: supabaseUser.email!,
-          name: adminData.name,
-          role: 'admin',
-          phone: adminData.phone,
-          address: adminData.address,
-          createdAt: adminData.created_at
-        });
-        return;
-      }
-
-      const { data: hotelData } = await supabase
-        .from('hotel_managers')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-
-      if (hotelData) {
-        setUser({
-          id: supabaseUser.id,
-          email: supabaseUser.email!,
-          name: hotelData.name,
-          role: 'hotel',
-          phone: hotelData.phone,
-          address: hotelData.address,
-          createdAt: hotelData.created_at
-        });
-        return;
-      }
-
-      const { data: driverData } = await supabase
-        .from('drivers')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-
-      if (driverData) {
-        setUser({
-          id: supabaseUser.id,
-          email: supabaseUser.email!,
-          name: driverData.name,
-          role: 'driver',
-          phone: driverData.phone,
-          address: driverData.address,
-          createdAt: driverData.created_at
-        });
-        return;
-      }
+      localStorage.setItem('safarPk_user', JSON.stringify(userData));
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('Error saving user to localStorage:', error);
+    }
+  };
+
+  // Helper function to clear user from localStorage
+  const clearUserFromStorage = () => {
+    try {
+      localStorage.removeItem('safarPk_user');
+    } catch (error) {
+      console.error('Error clearing user from localStorage:', error);
     }
   };
 
@@ -146,23 +71,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error('Login error:', error);
-        setIsLoading(false);
-        return false;
+      // Check if user exists in localStorage
+      const storedUser = localStorage.getItem('safarPk_user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        if (userData.email === email) {
+          // For demo purposes, we'll accept any password
+          // In a real app, you'd want to hash and compare passwords
+          setUser(userData);
+          setIsLoading(false);
+          return true;
+        }
       }
-
-      if (data.user) {
-        await fetchUserData(data.user);
-        setIsLoading(false);
-        return true;
-      }
-
+      
       setIsLoading(false);
       return false;
     } catch (error) {
@@ -183,85 +104,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      // First, sign up the user with Supabase Auth
-      const { data, error } = await supabase.auth.signUp({
+      // Check if user already exists
+      const existingUser = localStorage.getItem('safarPk_user');
+      if (existingUser) {
+        const parsedUser = JSON.parse(existingUser);
+        if (parsedUser.email === userData.email) {
+          setIsLoading(false);
+          return false; // User already exists
+        }
+      }
+
+      // Create new user object
+      const newUser: User = {
+        id: Date.now().toString(), // Simple ID generation for demo
         email: userData.email,
-        password: userData.password,
-      });
+        name: userData.name,
+        role: userData.role,
+        phone: userData.phone,
+        address: userData.address,
+        createdAt: new Date().toISOString()
+      };
 
-      if (error) {
-        console.error('Registration error:', error);
-        setIsLoading(false);
-        return false;
-      }
-
-      if (!data.user) {
-        setIsLoading(false);
-        return false;
-      }
-
-      // Insert user data into the appropriate table based on role
-      let insertError;
-      switch (userData.role) {
-        case 'customer':
-          const { error: customerError } = await supabase
-            .from('customers')
-            .insert({
-              id: data.user.id,
-              name: userData.name,
-              phone: userData.phone,
-              address: userData.address,
-            });
-          insertError = customerError;
-          break;
-
-        case 'admin':
-          const { error: adminError } = await supabase
-            .from('admins')
-            .insert({
-              id: data.user.id,
-              name: userData.name,
-              phone: userData.phone,
-              address: userData.address,
-            });
-          insertError = adminError;
-          break;
-
-        case 'hotel':
-          const { error: hotelError } = await supabase
-            .from('hotel_managers')
-            .insert({
-              id: data.user.id,
-              name: userData.name,
-              phone: userData.phone,
-              address: userData.address,
-            });
-          insertError = hotelError;
-          break;
-
-        case 'driver':
-          const { error: driverError } = await supabase
-            .from('drivers')
-            .insert({
-              id: data.user.id,
-              name: userData.name,
-              phone: userData.phone,
-              address: userData.address,
-            });
-          insertError = driverError;
-          break;
-      }
-
-      if (insertError) {
-        console.error('Error inserting user data:', insertError);
-        // If insertion fails, we should clean up the auth user
-        await supabase.auth.admin.deleteUser(data.user.id);
-        setIsLoading(false);
-        return false;
-      }
-
-      // Fetch the user data to set the user state
-      await fetchUserData(data.user);
+      // Save to localStorage
+      saveUserToStorage(newUser);
+      setUser(newUser);
+      
       setIsLoading(false);
       return true;
     } catch (error) {
@@ -271,9 +138,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async () => {
+  const logout = () => {
     try {
-      await supabase.auth.signOut();
+      clearUserFromStorage();
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);

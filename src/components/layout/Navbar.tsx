@@ -3,12 +3,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { MapPin, LogOut, User, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -40,22 +34,24 @@ export const Navbar: React.FC = () => {
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {!user && (
-              <>
-                <Link to="/" className="text-gray-700 hover:text-primary transition-colors">
-                  Home
-                </Link>
-                <Link to="/destinations" className="text-gray-700 hover:text-primary transition-colors">
-                  Destinations
-                </Link>
-                <Link to="/trip" className="text-gray-700 hover:text-primary transition-colors">
-                  My Trips
-                </Link>
-                <Link to="/map" className="text-gray-700 hover:text-primary transition-colors">
-                  Map
-                </Link>
-              </>
+            <Link to="/" className="text-gray-700 hover:text-primary transition-colors">
+              Home
+            </Link>
+            <Link to="/destinations" className="text-gray-700 hover:text-primary transition-colors">
+              Destinations
+            </Link>
+            <Link to="/trip" className="text-gray-700 hover:text-primary transition-colors">
+              My Trips
+            </Link>
+            {/* Show Dashboard link only for Driver, Admin, and Hotel roles */}
+            {user && user.role !== 'customer' && (
+              <Link to="/dashboard" className="text-gray-700 hover:text-primary transition-colors">
+                Dashboard
+              </Link>
             )}
+            {/* <Link to="/map" className="text-gray-700 hover:text-primary transition-colors">
+              Map
+            </Link> */}
           </div>
 
           {/* Desktop Auth Buttons */}
@@ -73,31 +69,14 @@ export const Navbar: React.FC = () => {
                 </Button>
               </div>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:bg-gray-100 focus:outline-none"
-                  >
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link to="/driver">Driver</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/hotel">Hotel</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/signup">Sign Up</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin">Admin</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center space-x-4">
+                <Link to="/login" className="text-gray-700 hover:text-primary transition-colors">
+                  Login
+                </Link>
+                <Link to="/signup" className="text-gray-700 hover:text-primary transition-colors">
+                  Sign Up
+                </Link>
+              </div>
             )}
           </div>
 
@@ -118,66 +97,65 @@ export const Navbar: React.FC = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
+              {/* Main Navigation Links - Always visible */}
+              <Link 
+                to="/" 
+                className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link 
+                to="/destinations" 
+                className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Destinations
+              </Link>
+              <Link 
+                to="/trip" 
+                className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                My Trips
+              </Link>
+              {/* Show Dashboard link only for Driver, Admin, and Hotel roles */}
+              {user && user.role !== 'customer' && (
+                <Link 
+                  to="/dashboard" 
+                  className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              )}
+              {/* <Link 
+                to="/map" 
+                className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Map
+              </Link> */}
+
               {!user && (
                 <>
-                  <Link 
-                    to="/" 
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Home
-                  </Link>
-                  <Link 
-                    to="/destinations" 
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Destinations
-                  </Link>
-                  <Link 
-                    to="/trip" 
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Trip
-                  </Link>
-                  <Link 
-                    to="/map" 
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Map
-                  </Link>
-
-                  {/* Extra Links for mobile/tablet */}
-                  <Link 
-                    to="/driver" 
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Driver
-                  </Link>
-                  <Link 
-                    to="/hotel" 
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Hotel
-                  </Link>
-                  <Link 
-                    to="/signup" 
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Sign Up
-                  </Link>
-                  <Link 
-                    to="/admin" 
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Admin
-                  </Link>
+                  {/* Auth Links for mobile */}
+                  <div className="border-t border-gray-200 pt-2 mt-2">
+                    <Link 
+                      to="/login" 
+                      className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link 
+                      to="/signup" 
+                      className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Sign Up
+                    </Link>
+                  </div>
                 </>
               )}
               

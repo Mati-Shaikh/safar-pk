@@ -68,7 +68,7 @@ const AppContent = () => {
     
     switch (user.role) {
       case 'customer':
-        return <CustomerDashboard />;
+        return <Index />; // Show home page for customers instead of dashboard
       case 'driver':
         return <DriverDashboard />;
       case 'hotel':

@@ -43,7 +43,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
       const success = await login(formData.email, formData.password);
       if (success) {
         toast({ title: 'Welcome back!', description: 'Successfully logged in.' });
-        navigate('/dashboard');
+        // Redirect based on user role - customers go to home page, others to dashboard
+        const userRole = JSON.parse(localStorage.getItem('safarPk_user') || '{}').role;
+        if (userRole === 'customer') {
+          navigate('/');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         toast({ 
           title: 'Login failed', 
@@ -66,7 +72,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
           title: 'Account created!', 
           description: 'Welcome to SAFARPk.' 
         });
-        navigate('/dashboard');
+        // Redirect based on user role - customers go to home page, others to dashboard
+        if (formData.role === 'customer') {
+          navigate('/');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         toast({ 
           title: 'Registration failed', 
