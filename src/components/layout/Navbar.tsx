@@ -59,8 +59,8 @@ export const Navbar: React.FC = () => {
             <Link to="/trip" className="text-gray-700 hover:text-primary transition-colors">
               My Trips
             </Link>
-            {/* Show Dashboard link for all authenticated users */}
-            {user && profile && (
+            {/* Show Dashboard link only for Driver, Admin, and Hotel Owner */}
+            {user && profile && profile.role !== UserRole.CUSTOMER && (
               <Link to="/dashboard" className="text-gray-700 hover:text-primary transition-colors">
                 Dashboard
               </Link>
@@ -143,8 +143,8 @@ export const Navbar: React.FC = () => {
               >
                 My Trips
               </Link>
-              {/* Show Dashboard link for all authenticated users */}
-              {user && profile && (
+              {/* Show Dashboard link only for Driver, Admin, and Hotel Owner */}
+              {user && profile && profile.role !== UserRole.CUSTOMER && (
                 <Link
                   to="/dashboard"
                   className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
