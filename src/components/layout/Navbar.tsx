@@ -2,20 +2,36 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { MapPin, LogOut, User, Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { UserRole } from '@/lib/supabase';
+import AuthModal from '@/components/auth/AuthModal';
 
 export const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
-  const getRoleName = (role: string) => {
+  const getRoleName = (role: UserRole) => {
     switch (role) {
-      case 'customer': return 'Customer';
-      case 'driver': return 'Driver';
-      case 'hotel': return 'Hotel Owner';
-      case 'admin': return 'Admin';
+      case UserRole.CUSTOMER: return 'Customer';
+      case UserRole.DRIVER: return 'Driver';
+      case UserRole.HOTEL_OWNER: return 'Hotel Owner';
+      case UserRole.ADMIN: return 'Admin';
       default: return role;
     }
+  };
+
+  const openAuthModal = (mode: 'login' | 'signup') => {
+    setAuthMode(mode);
+    setAuthModalOpen(true);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setIsMenuOpen(false);
+    navigate('/'); // Redirect to home page after logout
   };
 
   const toggleMenu = () => {
@@ -43,8 +59,8 @@ export const Navbar: React.FC = () => {
             <Link to="/trip" className="text-gray-700 hover:text-primary transition-colors">
               My Trips
             </Link>
-            {/* Show Dashboard link only for Driver, Admin, and Hotel roles */}
-            {user && user.role !== 'customer' && (
+            {/* Show Dashboard link for all authenticated users */}
+            {user && profile && (
               <Link to="/dashboard" className="text-gray-700 hover:text-primary transition-colors">
                 Dashboard
               </Link>
@@ -56,26 +72,34 @@ export const Navbar: React.FC = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            {user ? (
+            {user && profile ? (
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <User className="h-4 w-4" />
-                  <span className="text-sm">{user.name}</span>
-                  <span className="text-xs text-muted-foreground">({getRoleName(user.role)})</span>
+                  <span className="text-sm">{profile.full_name}</span>
+                  <span className="text-xs text-muted-foreground">({getRoleName(profile.role)})</span>
                 </div>
-                <Button variant="outline" size="sm" onClick={logout}>
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
                 </Button>
               </div>
             ) : (
               <div className="flex items-center space-x-4">
-                <Link to="/login" className="text-gray-700 hover:text-primary transition-colors">
+                <Button
+                  variant="ghost"
+                  onClick={() => openAuthModal('login')}
+                  className="text-gray-700 hover:text-primary transition-colors"
+                >
                   Login
-                </Link>
-                <Link to="/signup" className="text-gray-700 hover:text-primary transition-colors">
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => openAuthModal('signup')}
+                  className="text-gray-700 hover:text-primary transition-colors"
+                >
                   Sign Up
-                </Link>
+                </Button>
               </div>
             )}
           </div>
@@ -119,10 +143,10 @@ export const Navbar: React.FC = () => {
               >
                 My Trips
               </Link>
-              {/* Show Dashboard link only for Driver, Admin, and Hotel roles */}
-              {user && user.role !== 'customer' && (
-                <Link 
-                  to="/dashboard" 
+              {/* Show Dashboard link for all authenticated users */}
+              {user && profile && (
+                <Link
+                  to="/dashboard"
                   className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -140,39 +164,42 @@ export const Navbar: React.FC = () => {
               {!user && (
                 <>
                   {/* Auth Links for mobile */}
-                  <div className="border-t border-gray-200 pt-2 mt-2">
-                    <Link 
-                      to="/login" 
-                      className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
+                  <div className="border-t border-gray-200 pt-2 mt-2 space-y-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        openAuthModal('login');
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full justify-start px-3 py-2 text-gray-700 hover:text-primary"
                     >
                       Login
-                    </Link>
-                    <Link 
-                      to="/signup" 
-                      className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        openAuthModal('signup');
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full justify-start px-3 py-2 text-gray-700 hover:text-primary"
                     >
                       Sign Up
-                    </Link>
+                    </Button>
                   </div>
                 </>
               )}
-              
-              {user ? (
-                <div className="px-3 py-2">
+
+              {user && profile ? (
+                <div className="px-3 py-2 border-t border-gray-200 pt-2 mt-2">
                   <div className="flex items-center space-x-2 mb-2">
                     <User className="h-4 w-4" />
-                    <span className="text-sm">{user.name}</span>
-                    <span className="text-xs text-muted-foreground">({getRoleName(user.role)})</span>
+                    <span className="text-sm">{profile.full_name}</span>
+                    <span className="text-xs text-muted-foreground">({getRoleName(profile.role)})</span>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => {
-                      logout();
-                      setIsMenuOpen(false);
-                    }}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSignOut}
                     className="w-full"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
@@ -184,6 +211,13 @@ export const Navbar: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultMode={authMode}
+      />
     </nav>
   );
 };

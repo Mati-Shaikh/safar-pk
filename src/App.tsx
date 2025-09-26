@@ -5,28 +5,28 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { DataProvider } from "./contexts/DataContext";
-import { LoginForm } from "./components/auth/LoginForm";
 import { Navbar } from "./components/layout/Navbar";
-import { CustomerDashboard } from "./pages/CustomerDashboard";
-import { DriverDashboard } from "./pages/DriverDashboard";
-import { HotelDashboard } from "./pages/HotelDashboard";
-import { AdminDashboard } from "./pages/AdminDashboard";
 import Index from "./pages/Index";
 import Destinations from "./pages/Destinations";
 import NotFound from "./pages/NotFound";
 import TripPage from "./pages/TripPage";
 import Map from "./pages/MapManager";
+import { CustomerDashboard } from "./pages/CustomerDashboard";
+import { DriverDashboard } from "./pages/DriverDashboard";
+import { HotelDashboard } from "./pages/HotelDashboard";
+import { AdminDashboard } from "./pages/AdminDashboard";
+import { UserRole } from "./lib/supabase";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const { user, isLoading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800 mx-auto mb-4"></div>
           <p>Loading...</p>
         </div>
       </div>
@@ -40,23 +40,16 @@ const AppContent = () => {
         {/* Public routes */}
         <Route path="/" element={<Index />} />
         <Route path="/destinations" element={<Destinations />} />
-        <Route path="/login" element={<LoginForm onToggleMode={() => {}} />} />
-        <Route path="/signup" element={<LoginForm onToggleMode={() => {}} />} />
         <Route path="/trip" element={<TripPage />} />
         <Route path="/map" element={<Map />} />
-        
-        {/* Protected routes */}
-        
+
+        {/* Protected routes - Add these later when you create dashboard components */}
+        {user && profile && (
           <>
             <Route path="/dashboard" element={getDashboard()} />
-            <Route path="/customer" element={<CustomerDashboard />} />
-            <Route path="/driver" element={<DriverDashboard />} />
-            <Route path="/hotel" element={<HotelDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            
           </>
-      
-        
+        )}
+
         {/* Fallback */}
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -64,16 +57,16 @@ const AppContent = () => {
   );
 
   function getDashboard() {
-    if (!user) return <Index />;
-    
-    switch (user.role) {
-      case 'customer':
-        return <Index />; // Show home page for customers instead of dashboard
-      case 'driver':
+    if (!user || !profile) return <Index />;
+
+    switch (profile.role) {
+      case UserRole.CUSTOMER:
+        return <CustomerDashboard />;
+      case UserRole.DRIVER:
         return <DriverDashboard />;
-      case 'hotel':
+      case UserRole.HOTEL_OWNER:
         return <HotelDashboard />;
-      case 'admin':
+      case UserRole.ADMIN:
         return <AdminDashboard />;
       default:
         return <NotFound />;

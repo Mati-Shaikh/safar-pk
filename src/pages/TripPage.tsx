@@ -16,15 +16,15 @@ import {
   DialogTrigger,
   DialogFooter 
 } from '@/components/ui/dialog';
-import { 
-  Plus, 
-  MapPin, 
-  Star, 
-  Calendar, 
-  Car, 
-  Clock, 
-  Trash2, 
-  ArrowRight, 
+import {
+  Plus,
+  MapPin,
+  Star,
+  Calendar,
+  Car,
+  Clock,
+  Trash2,
+  ArrowRight,
   ArrowLeft,
   Users,
   Eye,
@@ -33,7 +33,9 @@ import {
   Camera,
   Search,
   Filter,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import Footer from '@/components/layout/Footer';
 
@@ -138,7 +140,7 @@ interface Room {
   price: string;
   capacity: number;
   amenities: string[];
-  image: string;
+  images: string[];
   available: boolean;
 }
 
@@ -157,6 +159,7 @@ interface ItinerarySlot {
   hotelRoomNeeded: boolean;
   hotelDetails: string;
   selectedRoom: Room | null;
+  selectedCar: Car | null;
   carDetails: string;
   notes: string;
 }
@@ -188,7 +191,13 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 25,000",
         capacity: 2,
         amenities: ["Free WiFi", "Air Conditioning", "Mini Bar", "Room Service", "City View"],
-        image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=600&h=400&fit=crop"
+        ],
         available: true
       },
       {
@@ -198,7 +207,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 45,000",
         capacity: 4,
         amenities: ["Free WiFi", "Air Conditioning", "Mini Bar", "Room Service", "City View", "Separate Living Area", "Premium Bedding"],
-        image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop"
+        ],
         available: true
       },
       {
@@ -208,7 +222,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 18,000",
         capacity: 2,
         amenities: ["Free WiFi", "Air Conditioning", "Room Service"],
-        image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=600&h=400&fit=crop"
+        ],
         available: true
       }
     ]
@@ -223,7 +242,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 22,000",
         capacity: 2,
         amenities: ["Free WiFi", "Air Conditioning", "Mini Bar", "Room Service", "Traditional Decor"],
-        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=600&h=400&fit=crop"
+        ],
         available: true
       },
       {
@@ -233,7 +257,13 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 65,000",
         capacity: 6,
         amenities: ["Free WiFi", "Air Conditioning", "Mini Bar", "Room Service", "City View", "Butler Service", "Private Balcony"],
-        image: "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&h=400&fit=crop"
+        ],
         available: true
       },
       {
@@ -243,7 +273,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 28,000",
         capacity: 2,
         amenities: ["Free WiFi", "Air Conditioning", "Mini Bar", "Room Service", "Contemporary Design"],
-        image: "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=600&h=400&fit=crop"
+        ],
         available: true
       }
     ]
@@ -258,7 +293,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 35,000",
         capacity: 2,
         amenities: ["Free WiFi", "Air Conditioning", "Mini Bar", "Room Service", "Ocean View", "Balcony"],
-        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop"
+        ],
         available: true
       },
       {
@@ -268,7 +308,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 42,000",
         capacity: 4,
         amenities: ["Free WiFi", "Air Conditioning", "Mini Bar", "Room Service", "Family Friendly", "Extra Bedding"],
-        image: "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=600&h=400&fit=crop"
+        ],
         available: true
       }
     ]
@@ -283,7 +328,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 30,000",
         capacity: 2,
         amenities: ["Free WiFi", "Heating", "Mini Bar", "Room Service", "Mountain View", "Traditional Heating"],
-        image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop"
+        ],
         available: true
       },
       {
@@ -293,7 +343,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 40,000",
         capacity: 2,
         amenities: ["Free WiFi", "Heating", "Mini Bar", "Room Service", "Mountain View", "Premium Bedding", "Private Balcony"],
-        image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop"
+        ],
         available: true
       }
     ]
@@ -308,7 +363,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 50,000",
         capacity: 2,
         amenities: ["Free WiFi", "Heating", "Private Bathroom", "Room Service", "Mountain View", "Glamping Experience"],
-        image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop"
+        ],
         available: true
       },
       {
@@ -318,7 +378,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 38,000",
         capacity: 4,
         amenities: ["Free WiFi", "Heating", "Mini Bar", "Room Service", "Mountain View", "Resort Amenities"],
-        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&h=400&fit=crop"
+        ],
         available: true
       }
     ]
@@ -333,7 +398,12 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 32,000",
         capacity: 2,
         amenities: ["Free WiFi", "Heating", "Traditional Design", "Room Service", "Valley View", "Local Architecture"],
-        image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop"
+        ],
         available: true
       },
       {
@@ -343,111 +413,671 @@ const HOTELS_WITH_ROOMS: HotelWithRooms[] = [
         price: "PKR 28,000",
         capacity: 2,
         amenities: ["Free WiFi", "Heating", "Traditional Furnishings", "Room Service", "Heritage Experience"],
-        image: "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=400&h=300&fit=crop",
+        images: [
+          "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop",
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop"
+        ],
         available: true
       }
     ]
   }
 ];
 
-const CAR_OPTIONS = [
-  "Toyota Corolla (Sedan) - 4 seats",
-  "Honda City (Sedan) - 4 seats", 
-  "Toyota Fortuner (SUV) - 7 seats",
-  "Honda CR-V (SUV) - 5 seats",
-  "Hiace Van - 12 seats",
-  "Coaster Bus - 25 seats",
-  "Land Cruiser (4WD) - 7 seats",
-  "Suzuki Vitara (4WD) - 5 seats",
+interface Car {
+  id: string;
+  name: string;
+  type: string;
+  seats: number;
+  pricePerDay: string;
+  images: string[];
+  features: string[];
+  description: string;
+}
+
+const CAR_OPTIONS: Car[] = [
+  {
+    id: "toyota-corolla",
+    name: "Toyota Corolla",
+    type: "Sedan",
+    seats: 4,
+    pricePerDay: "PKR 8,000",
+    images: [
+      "https://images.unsplash.com/photo-1549399302-5bf9b5bb93b8?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1580414449872-2bc7de85f50d?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop"
+    ],
+    features: ["Air Conditioning", "Fuel Efficient", "Comfortable"],
+    description: "Perfect for small groups and city travel"
+  },
+  {
+    id: "honda-city",
+    name: "Honda City",
+    type: "Sedan",
+    seats: 4,
+    pricePerDay: "PKR 8,500",
+    images: [
+      "https://images.unsplash.com/photo-1580414449872-2bc7de85f50d?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1549399302-5bf9b5bb93b8?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=600&h=400&fit=crop"
+    ],
+    features: ["Air Conditioning", "Modern Interior", "Reliable"],
+    description: "Stylish and comfortable sedan for urban exploration"
+  },
+  {
+    id: "toyota-fortuner",
+    name: "Toyota Fortuner",
+    type: "SUV",
+    seats: 7,
+    pricePerDay: "PKR 15,000",
+    images: [
+      "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&h=400&fit=crop"
+    ],
+    features: ["4WD", "Spacious", "Off-Road Capable"],
+    description: "Ideal for mountain terrain and larger groups"
+  },
+  {
+    id: "honda-crv",
+    name: "Honda CR-V",
+    type: "SUV",
+    seats: 5,
+    pricePerDay: "PKR 12,000",
+    images: [
+      "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1580414449872-2bc7de85f50d?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=600&h=400&fit=crop"
+    ],
+    features: ["All-Wheel Drive", "Fuel Efficient", "Safe"],
+    description: "Versatile SUV perfect for adventure trips"
+  },
+  {
+    id: "hiace-van",
+    name: "Hiace Van",
+    type: "Van",
+    seats: 12,
+    pricePerDay: "PKR 18,000",
+    images: [
+      "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop"
+    ],
+    features: ["High Capacity", "Luggage Space", "Group Travel"],
+    description: "Best for large groups and extended trips"
+  },
+  {
+    id: "coaster-bus",
+    name: "Coaster Bus",
+    type: "Bus",
+    seats: 25,
+    pricePerDay: "PKR 25,000",
+    images: [
+      "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop"
+    ],
+    features: ["Large Capacity", "Comfortable Seating", "Long Distance"],
+    description: "Perfect for large groups and tour groups"
+  },
+  {
+    id: "land-cruiser",
+    name: "Land Cruiser",
+    type: "4WD",
+    seats: 7,
+    pricePerDay: "PKR 20,000",
+    images: [
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=600&h=400&fit=crop"
+    ],
+    features: ["4WD", "Off-Road", "Rugged", "Mountain Terrain"],
+    description: "Ultimate vehicle for rough terrains and mountain adventures"
+  },
+  {
+    id: "suzuki-vitara",
+    name: "Suzuki Vitara",
+    type: "4WD",
+    seats: 5,
+    pricePerDay: "PKR 10,000",
+    images: [
+      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1580414449872-2bc7de85f50d?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600&h=400&fit=crop"
+    ],
+    features: ["All-Wheel Drive", "Compact", "Efficient"],
+    description: "Compact 4WD perfect for smaller groups on adventure trips"
+  }
 ];
+
+// Car Image Gallery Component
+const CarImageGallery = ({ car, selectedCar }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const nextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % car.images.length);
+  };
+
+  const prevImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + car.images.length) % car.images.length);
+  };
+
+  const goToImage = (index, e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(index);
+  };
+
+  return (
+    <div className="relative group">
+      <img
+        src={car.images[currentImageIndex]}
+        alt={`${car.name} - Image ${currentImageIndex + 1}`}
+        className="w-full h-48 object-cover rounded-t-lg"
+      />
+
+      {/* Selection Badge */}
+      {selectedCar?.id === car.id && (
+        <div className="absolute top-4 right-4">
+          <Badge className="bg-blue-500 text-white">Selected</Badge>
+        </div>
+      )}
+
+      {/* Seats Badge */}
+      <div className="absolute top-4 left-4">
+        <Badge variant="secondary" className="bg-white/90 text-black">
+          {car.seats} Seats
+        </Badge>
+      </div>
+
+      {/* Navigation Arrows */}
+      {car.images.length > 1 && (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-8 w-8"
+            onClick={prevImage}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-8 w-8"
+            onClick={nextImage}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </>
+      )}
+
+      {/* Image Dots */}
+      {car.images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1">
+          {car.images.map((_, index) => (
+            <button
+              key={index}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+              }`}
+              onClick={(e) => goToImage(index, e)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Image Counter */}
+      <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded">
+        {currentImageIndex + 1} / {car.images.length}
+      </div>
+    </div>
+  );
+};
+
+// Car Selection Modal Component
+const CarSelectionModal = ({ isOpen, onClose, onCarSelect, selectedCar, onConfirm }) => {
+  const [selectedCarDetails, setSelectedCarDetails] = useState(null);
+
+  const handleCarSelect = (car) => {
+    onCarSelect(car);
+  };
+
+  const handleViewDetails = (car) => {
+    setSelectedCarDetails(car);
+  };
+
+  const handleBackToGrid = () => {
+    setSelectedCarDetails(null);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl text-gray-800">
+            {selectedCarDetails ? selectedCarDetails.name : 'Select Your Vehicle'}
+          </DialogTitle>
+          <DialogDescription>
+            {selectedCarDetails
+              ? 'Vehicle details and image gallery'
+              : 'Choose the perfect vehicle for your trip with pricing per day'
+            }
+          </DialogDescription>
+          {selectedCarDetails && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBackToGrid}
+              className="w-fit mt-2"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back to All Vehicles
+            </Button>
+          )}
+        </DialogHeader>
+
+        {selectedCarDetails ? (
+          // Detailed view of selected car
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Image Gallery */}
+              <div>
+                <CarImageGallery car={selectedCarDetails} selectedCar={selectedCar} />
+              </div>
+
+              {/* Car Details */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-800">{selectedCarDetails.name}</h3>
+                  <p className="text-lg text-gray-600">{selectedCarDetails.type}</p>
+                  <p className="text-sm text-gray-500 mt-2">{selectedCarDetails.description}</p>
+                </div>
+
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-3xl font-bold text-gray-800">{selectedCarDetails.pricePerDay}</span>
+                    <span className="text-sm text-gray-500">per day</span>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      {selectedCarDetails.seats} Seats
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Car className="h-4 w-4" />
+                      {selectedCarDetails.type}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-3">Features & Amenities:</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {selectedCarDetails.features.map((feature, index) => (
+                      <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => handleCarSelect(selectedCarDetails)}
+                  className={`w-full ${
+                    selectedCar?.id === selectedCarDetails.id
+                      ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                      : 'bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800'
+                  }`}
+                >
+                  {selectedCar?.id === selectedCarDetails.id ? 'Selected ✓' : 'Select This Vehicle'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Grid view of all cars
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-2">
+            {CAR_OPTIONS.map((car) => (
+              <Card
+                key={car.id}
+                className={`cursor-pointer transition-all duration-300 border-2 hover:shadow-lg ${
+                  selectedCar?.id === car.id
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="relative">
+                  <img
+                    src={car.images[0]}
+                    alt={car.name}
+                    className="w-full h-40 object-cover rounded-t-lg"
+                  />
+
+                  {/* Selection Badge */}
+                  {selectedCar?.id === car.id && (
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-blue-500 text-white">Selected</Badge>
+                    </div>
+                  )}
+
+                  {/* Seats Badge */}
+                  <div className="absolute top-3 left-3">
+                    <Badge variant="secondary" className="bg-white/90 text-black">
+                      {car.seats} Seats
+                    </Badge>
+                  </div>
+
+                  {/* Image count */}
+                  <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                    {car.images.length} Photos
+                  </div>
+                </div>
+
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800">{car.name}</h3>
+                      <p className="text-sm text-gray-600">{car.type}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-xl font-bold text-gray-800">{car.pricePerDay}</span>
+                      <span className="text-xs text-gray-500">per day</span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1">
+                      {car.features.slice(0, 2).map((feature, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {feature}
+                        </Badge>
+                      ))}
+                      {car.features.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{car.features.length - 2}
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDetails(car);
+                        }}
+                        className="flex-1 text-xs"
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        View Details
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCarSelect(car);
+                        }}
+                        className={`flex-1 text-xs ${
+                          selectedCar?.id === car.id
+                            ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                            : 'bg-gray-800 hover:bg-gray-900 text-white'
+                        }`}
+                      >
+                        {selectedCar?.id === car.id ? 'Selected ✓' : 'Select'}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <DialogFooter className="flex justify-between pt-6">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={onConfirm}
+            disabled={!selectedCar}
+            className="bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800"
+          >
+            Confirm Selection
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Room Image Gallery Component
+const RoomImageGallery = ({ room, selectedRoom }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const nextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % room.images.length);
+  };
+
+  const prevImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + room.images.length) % room.images.length);
+  };
+
+  const goToImage = (index, e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(index);
+  };
+
+  return (
+    <div className="relative group">
+      <img
+        src={room.images[currentImageIndex]}
+        alt={`${room.type} - Image ${currentImageIndex + 1}`}
+        className="w-full h-64 object-cover rounded-t-lg"
+      />
+
+      {/* Selection Badge */}
+      {selectedRoom?.id === room.id && (
+        <div className="absolute top-4 right-4">
+          <Badge className="bg-blue-500 text-white">Selected</Badge>
+        </div>
+      )}
+
+      {/* Capacity Badge */}
+      <div className="absolute top-4 left-4">
+        <Badge variant="secondary" className="bg-white/90 text-black">
+          {room.capacity} {room.capacity === 1 ? 'Guest' : 'Guests'}
+        </Badge>
+      </div>
+
+      {/* Navigation Arrows */}
+      {room.images.length > 1 && (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-8 w-8"
+            onClick={prevImage}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-8 w-8"
+            onClick={nextImage}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </>
+      )}
+
+      {/* Image Dots */}
+      {room.images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1">
+          {room.images.map((_, index) => (
+            <button
+              key={index}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+              }`}
+              onClick={(e) => goToImage(index, e)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Image Counter */}
+      <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded">
+        {currentImageIndex + 1} / {room.images.length}
+      </div>
+    </div>
+  );
+};
 
 // Room Selection Modal Component
 const RoomSelectionModal = ({ isOpen, onClose, hotelName, onRoomSelect, selectedRoom, onConfirm }) => {
   const hotel = HOTELS_WITH_ROOMS.find(h => h.name === hotelName);
-  
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   if (!hotel) return null;
+
+  const nextRoom = () => {
+    setCurrentIndex((prev) => (prev + 1) % hotel.rooms.length);
+  };
+
+  const prevRoom = () => {
+    setCurrentIndex((prev) => (prev - 1 + hotel.rooms.length) % hotel.rooms.length);
+  };
+
+  const handleRoomSelect = (room) => {
+    onRoomSelect(room);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl text-gray-800">Select a Room - {hotelName}</DialogTitle>
           <DialogDescription>
             Choose your preferred room type and amenities for your stay
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {hotel.rooms.map((room) => (
-            <Card 
-              key={room.id} 
-              className={`cursor-pointer transition-all duration-300 hover:shadow-lg border-2 ${
-                selectedRoom?.id === room.id 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-              onClick={() => onRoomSelect(room)}
+
+        <div className="relative">
+          {/* Main carousel */}
+          <div className="relative overflow-hidden rounded-lg">
+            <div
+              className="flex transition-transform duration-300 ease-in-out"
+              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
-              <div className="relative">
-                <img
-                  src={room.image}
-                  alt={room.type}
-                  className="w-full h-48 object-cover rounded-t-lg"
-                />
-                {selectedRoom?.id === room.id && (
-                  <div className="absolute top-2 right-2">
-                    <Badge className="bg-blue-500 text-white">Selected</Badge>
-                  </div>
-                )}
-                <div className="absolute top-2 left-2">
-                  <Badge variant="secondary" className="bg-white/90 text-black">
-                    {room.capacity} {room.capacity === 1 ? 'Guest' : 'Guests'}
-                  </Badge>
-                </div>
-              </div>
-              
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="font-semibold text-lg text-gray-800">{room.type}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{room.description}</p>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-gray-800">{room.price}</span>
-                    <span className="text-sm text-gray-500">per night</span>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-medium text-gray-700 mb-2">Amenities:</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {room.amenities.slice(0, 3).map((amenity, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {amenity}
-                        </Badge>
-                      ))}
-                      {room.amenities.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{room.amenities.length - 3} more
-                        </Badge>
-                      )}
+              {hotel.rooms.map((room) => (
+                <div key={room.id} className="w-full flex-shrink-0">
+                  <Card
+                    className={`cursor-pointer transition-all duration-300 border-2 ${
+                      selectedRoom?.id === room.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => handleRoomSelect(room)}
+                  >
+                    <div className="relative">
+                      {/* Room Image Gallery */}
+                      <RoomImageGallery room={room} selectedRoom={selectedRoom} />
                     </div>
-                  </div>
+
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-800">{room.type}</h3>
+                          <p className="text-sm text-gray-500 mt-2">{room.description}</p>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-3xl font-bold text-gray-800">{room.price}</span>
+                          <span className="text-sm text-gray-500">per night</span>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium text-gray-700 mb-2">Amenities:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {room.amenities.map((amenity, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {amenity}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              ))}
+            </div>
+          </div>
+
+          {/* Navigation buttons */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white"
+            onClick={prevRoom}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white"
+            onClick={nextRoom}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+
+          {/* Dots indicator */}
+          <div className="flex justify-center mt-4 space-x-2">
+            {hotel.rooms.map((_, index) => (
+              <button
+                key={index}
+                className={`w-2 h-2 rounded-full transition-colors ${
+                  index === currentIndex ? 'bg-blue-500' : 'bg-gray-300'
+                }`}
+                onClick={() => setCurrentIndex(index)}
+              />
+            ))}
+          </div>
         </div>
-        
+
         <DialogFooter className="flex justify-between pt-6">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onClose}
             className="border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={onConfirm}
             disabled={!selectedRoom}
             className="bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800"
@@ -463,8 +1093,10 @@ const RoomSelectionModal = ({ isOpen, onClose, hotelName, onRoomSelect, selected
 // Itinerary Day Card Component
 const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
   const [roomModalOpen, setRoomModalOpen] = useState(false);
+  const [carModalOpen, setCarModalOpen] = useState(false);
   const [currentSlotId, setCurrentSlotId] = useState(null);
   const [tempSelectedRoom, setTempSelectedRoom] = useState(null);
+  const [tempSelectedCar, setTempSelectedCar] = useState(null);
   const addSlot = () => {
     const newSlot = {
       id: Date.now(),
@@ -476,6 +1108,7 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
       hotelRoomNeeded: false,
       hotelDetails: '',
       selectedRoom: null,
+      selectedCar: null,
       carDetails: '',
       notes: ''
     };
@@ -516,6 +1149,32 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
     setRoomModalOpen(false);
     setCurrentSlotId(null);
     setTempSelectedRoom(null);
+  };
+
+  const openCarModal = (slotId) => {
+    setCurrentSlotId(slotId);
+    setTempSelectedCar(day.slots.find(s => s.id === slotId)?.selectedCar || null);
+    setCarModalOpen(true);
+  };
+
+  const handleCarSelect = (car) => {
+    setTempSelectedCar(car);
+  };
+
+  const confirmCarSelection = () => {
+    if (currentSlotId && tempSelectedCar) {
+      updateSlot(currentSlotId, 'selectedCar', tempSelectedCar);
+      updateSlot(currentSlotId, 'carDetails', `${tempSelectedCar.name} (${tempSelectedCar.type}) - ${tempSelectedCar.seats} seats - ${tempSelectedCar.pricePerDay}`);
+    }
+    setCarModalOpen(false);
+    setCurrentSlotId(null);
+    setTempSelectedCar(null);
+  };
+
+  const cancelCarSelection = () => {
+    setCarModalOpen(false);
+    setCurrentSlotId(null);
+    setTempSelectedCar(null);
   };
 
   const pakistanActivities = [
@@ -677,23 +1336,23 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
                         <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                           <div className="flex items-start space-x-3">
                             <img 
-                              src={slot.selectedRoom.image} 
-                              alt={slot.selectedRoom.type}
+                              src={slot.selectedRoom?.images?.[0]} 
+                              alt={slot.selectedRoom?.type}
                               className="w-16 h-12 object-cover rounded"
                             />
                             <div className="flex-1">
-                              <h4 className="font-medium text-gray-800">{slot.selectedRoom.type}</h4>
-                              <p className="text-sm text-gray-600">{slot.selectedRoom.price} per night</p>
-                              <p className="text-xs text-gray-500">{slot.selectedRoom.capacity} {slot.selectedRoom.capacity === 1 ? 'guest' : 'guests'}</p>
+                              <h4 className="font-medium text-gray-800">{slot.selectedRoom?.type}</h4>
+                              <p className="text-sm text-gray-600">{slot.selectedRoom?.price} per night</p>
+                              <p className="text-xs text-gray-500">{slot.selectedRoom?.capacity} {slot.selectedRoom?.capacity === 1 ? 'guest' : 'guests'}</p>
                               <div className="flex flex-wrap gap-1 mt-1">
-                                {slot.selectedRoom.amenities.slice(0, 2).map((amenity, index) => (
+                                {slot.selectedRoom?.amenities.slice(0, 2).map((amenity, index) => (
                                   <Badge key={index} variant="outline" className="text-xs">
                                     {amenity}
                                   </Badge>
                                 ))}
-                                {slot.selectedRoom.amenities.length > 2 && (
+                                {slot.selectedRoom?.amenities.length > 2 && (
                                   <Badge variant="outline" className="text-xs">
-                                    +{slot.selectedRoom.amenities.length - 2}
+                                    +{slot.selectedRoom?.amenities.length - 2}
                                   </Badge>
                                 )}
                               </div>
@@ -708,19 +1367,44 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
               {slot.transportNeeded && (
                 <div className="space-y-2 mt-4">
                   <Label className="text-gray-700 font-medium">Vehicle Details</Label>
-                  <Select 
-                    onValueChange={val => updateSlot(slot.id, 'carDetails', val)} 
-                    value={slot.carDetails}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openCarModal(slot.id)}
+                    className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
                   >
-                    <SelectTrigger className="border-gray-300 focus:border-gray-600">
-                      <SelectValue placeholder="Select a vehicle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CAR_OPTIONS.map(car => (
-                        <SelectItem key={car} value={car}>{car}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    {slot.selectedCar ? 'Change Vehicle Selection' : 'Select Vehicle'}
+                  </Button>
+
+                  {slot.selectedCar && (
+                    <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <img
+                          src={slot.selectedCar?.images?.[0]}
+                          alt={slot.selectedCar?.name}
+                          className="w-16 h-12 object-cover rounded"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800">{slot.selectedCar?.name}</h4>
+                          <p className="text-sm text-gray-600">{slot.selectedCar?.type} • {slot.selectedCar?.seats} seats</p>
+                          <p className="text-sm font-semibold text-orange-600">{slot.selectedCar?.pricePerDay} per day</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {slot.selectedCar?.features.slice(0, 2).map((feature, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {feature}
+                              </Badge>
+                            ))}
+                            {slot.selectedCar?.features.length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{slot.selectedCar?.features.length - 2} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -753,6 +1437,15 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
         onRoomSelect={handleRoomSelect}
         selectedRoom={tempSelectedRoom}
         onConfirm={confirmRoomSelection}
+      />
+
+      {/* Car Selection Modal */}
+      <CarSelectionModal
+        isOpen={carModalOpen}
+        onClose={cancelCarSelection}
+        onCarSelect={handleCarSelect}
+        selectedCar={tempSelectedCar}
+        onConfirm={confirmCarSelection}
       />
     </Card>
   );
@@ -919,12 +1612,12 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
       </div>
 
       {/* Trip Overview Card */}
-      <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <Card className="border border-gray-200">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl text-gray-800 flex items-center justify-center gap-2">
-            <Mountain className="h-6 w-6 text-blue-600" />
+            <Mountain className="h-6 w-6 text-black" />
             {tripForm.name}
-            <Mountain className="h-6 w-6 text-blue-600" />
+            <Mountain className="h-6 w-6 text-black" />
           </CardTitle>
           <CardDescription className="text-lg">
             <div className="flex items-center justify-center gap-4 text-gray-700">
@@ -947,7 +1640,7 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-blue-600" />
+                <Calendar className="h-5 w-5 text-black" />
                 <div>
                   <p className="font-medium text-gray-800">Trip Dates</p>
                   <p className="text-sm text-gray-600">
@@ -967,7 +1660,7 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
               
               {tripForm.budget && (
                 <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-green-600" />
+                  <Star className="h-5 w-5 text-black" />
                   <div>
                     <p className="font-medium text-gray-800">Budget</p>
                     <p className="text-sm text-gray-600">PKR {tripForm.budget}</p>
@@ -1004,10 +1697,10 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Hotels Summary */}
           {uniqueHotels.length > 0 && (
-            <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+            <Card className="border border-gray-200">
               <CardHeader>
                 <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
-                  <Star className="h-5 w-5 text-green-600" />
+                  <Star className="h-5 w-5 text-black" />
                   Accommodation
                 </CardTitle>
               </CardHeader>
@@ -1020,7 +1713,7 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
                   const uniqueRooms = [...new Set(rooms.map(room => room.type))];
                   
                   return (
-                    <div key={index} className="p-3 bg-white rounded-lg border border-green-200">
+                    <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <h4 className="font-medium text-gray-800 mb-2">{hotel as string}</h4>
                       {uniqueRooms.length > 0 && (
                         <div className="space-y-2">
@@ -1052,18 +1745,18 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
 
           {/* Transportation Summary */}
           {uniqueVehicles.length > 0 && (
-            <Card className="border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50">
+            <Card className="border border-gray-200">
               <CardHeader>
                 <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
-                  <Car className="h-5 w-5 text-orange-600" />
+                  <Car className="h-5 w-5 text-black" />
                   Transportation
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {uniqueVehicles.map((vehicle, index) => (
-                  <div key={index} className="p-3 bg-white rounded-lg border border-orange-200">
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex items-center gap-3">
-                      <Car className="h-8 w-8 text-orange-600" />
+                      <Car className="h-8 w-8 text-black" />
                       <div>
                         <p className="font-medium text-gray-700">{vehicle as string}</p>
                         <p className="text-sm text-gray-500">Available for your activities</p>
@@ -1078,18 +1771,18 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
       )}
 
       {/* Detailed Daily Itinerary */}
-      <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
+      <Card className="border border-gray-200">
         <CardHeader>
           <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-purple-600" />
+            <Calendar className="h-5 w-5 text-black" />
             Daily Itinerary
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             {tripForm.itinerary.map((day, dayIndex) => (
-              <div key={day.date} className="bg-white rounded-lg border border-purple-200 overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-3 border-b border-purple-200">
+              <div key={day.date} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
                   <h5 className="font-semibold text-gray-800 flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     Day {dayIndex + 1} - {new Date(day.date).toLocaleDateString('en-US', { 
@@ -1110,8 +1803,8 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
                       {day.slots.map((slot, slotIndex) => (
                         <div key={slot.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                           <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <Clock className="h-4 w-4 text-blue-600" />
+                            <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                              <Clock className="h-4 w-4 text-black" />
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
@@ -1129,23 +1822,23 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
                               
                               {/* Hotel Details */}
                               {slot.hotelRoomNeeded && slot.hotelDetails && (
-                                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
                                   <div className="flex items-start gap-3">
-                                    <Star className="h-5 w-5 text-green-600 mt-0.5" />
+                                    <Star className="h-5 w-5 text-black mt-0.5" />
                                     <div className="flex-1">
                                       <h6 className="font-medium text-gray-800">{slot.hotelDetails}</h6>
                                       {slot.selectedRoom && (
                                         <div className="mt-2 flex items-start gap-3">
                                           <img 
-                                            src={slot.selectedRoom.image} 
-                                            alt={slot.selectedRoom.type}
+                                            src={slot.selectedRoom?.images?.[0]} 
+                                            alt={slot.selectedRoom?.type}
                                             className="w-16 h-12 object-cover rounded"
                                           />
                                           <div>
-                                            <p className="text-sm font-medium text-gray-700">{slot.selectedRoom.type}</p>
-                                            <p className="text-xs text-gray-600">{slot.selectedRoom.price} per night</p>
+                                            <p className="text-sm font-medium text-gray-700">{slot.selectedRoom?.type}</p>
+                                            <p className="text-xs text-gray-600">{slot.selectedRoom?.price} per night</p>
                                             <div className="flex flex-wrap gap-1 mt-1">
-                                              {slot.selectedRoom.amenities.slice(0, 3).map((amenity, index) => (
+                                              {slot.selectedRoom?.amenities.slice(0, 3).map((amenity, index) => (
                                                 <Badge key={index} variant="outline" className="text-xs">
                                                   {amenity}
                                                 </Badge>
@@ -1160,13 +1853,18 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
                               )}
                               
                               {/* Vehicle Details */}
-                              {slot.transportNeeded && slot.carDetails && (
-                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
-                                  <div className="flex items-center gap-3">
-                                    <Car className="h-5 w-5 text-orange-600" />
+                              {slot.transportNeeded && slot.selectedCar && (
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
+                                  <div className="flex items-start gap-3">
+                                    <img
+                                      src={slot.selectedCar?.images?.[0]}
+                                      alt={slot.selectedCar?.name}
+                                      className="w-16 h-12 object-cover rounded"
+                                    />
                                     <div>
-                                      <p className="font-medium text-gray-800">{slot.carDetails}</p>
-                                      <p className="text-sm text-gray-600">Transportation provided</p>
+                                      <p className="font-medium text-gray-800">{slot.selectedCar?.name}</p>
+                                      <p className="text-sm text-gray-600">{slot.selectedCar?.type} • {slot.selectedCar?.seats} seats</p>
+                                      <p className="text-sm font-medium text-orange-600">{slot.selectedCar?.pricePerDay} per day</p>
                                     </div>
                                   </div>
                                 </div>
@@ -1174,9 +1872,9 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
                               
                               {/* Notes */}
                               {slot.notes && (
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                                   <div className="flex items-start gap-2">
-                                    <Eye className="h-4 w-4 text-blue-600 mt-0.5" />
+                                    <Eye className="h-4 w-4 text-black mt-0.5" />
                                     <div>
                                       <p className="text-sm font-medium text-gray-700 mb-1">Notes</p>
                                       <p className="text-sm text-gray-600">{slot.notes}</p>
@@ -1208,7 +1906,7 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
         </Button>
         <Button 
           onClick={handleCreateTrip}
-          className="bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700 px-8 py-2 text-lg font-semibold"
+          className="bg-black text-white hover:bg-gray-800 px-8 py-2 text-lg font-semibold"
         >
           🚀 Create My Trip
         </Button>
@@ -1594,13 +2292,13 @@ export default function TripsPage() {
                                                       {slot.selectedRoom && (
                                                         <div className="flex items-start gap-3 mt-2">
                                                           <img 
-                                                            src={slot.selectedRoom.image} 
-                                                            alt={slot.selectedRoom.type}
+                                                            src={slot.selectedRoom?.images?.[0]} 
+                                                            alt={slot.selectedRoom?.type}
                                                             className="w-16 h-12 object-cover rounded"
                                                           />
                                                           <div>
-                                                            <p className="text-sm font-medium text-black">{slot.selectedRoom.type}</p>
-                                                            <p className="text-xs text-gray-600">{slot.selectedRoom.price} per night</p>
+                                                            <p className="text-sm font-medium text-black">{slot.selectedRoom?.type}</p>
+                                                            <p className="text-xs text-gray-600">{slot.selectedRoom?.price} per night</p>
                                                           </div>
                                                         </div>
                                                       )}
@@ -1610,11 +2308,19 @@ export default function TripsPage() {
                                               )}
                                               
                                               {/* Vehicle Details */}
-                                              {slot.transportNeeded && slot.carDetails && (
-                                                <div className="bg-gray-50 p-3 rounded mb-2">
-                                                  <div className="flex items-center gap-3">
-                                                    <Car className="h-4 w-4 text-black" />
-                                                    <span className="font-medium text-black">{slot.carDetails}</span>
+                                              {slot.transportNeeded && slot.selectedCar && (
+                                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
+                                                  <div className="flex items-start gap-3">
+                                                    <img
+                                                      src={slot.selectedCar?.images?.[0]}
+                                                      alt={slot.selectedCar?.name}
+                                                      className="w-16 h-12 object-cover rounded"
+                                                    />
+                                                    <div>
+                                                      <p className="font-medium text-black">{slot.selectedCar?.name}</p>
+                                                      <p className="text-sm text-gray-600">{slot.selectedCar?.type} • {slot.selectedCar?.seats} seats</p>
+                                                      <p className="text-sm font-medium text-orange-600">{slot.selectedCar?.pricePerDay} per day</p>
+                                                    </div>
                                                   </div>
                                                 </div>
                                               )}
@@ -1653,15 +2359,15 @@ export default function TripsPage() {
                                     <div key={index} className="border border-gray-200 p-4">
                                       <div className="flex items-start gap-3">
                                         <img 
-                                          src={slot.selectedRoom.image} 
-                                          alt={slot.selectedRoom.type}
+                                          src={slot.selectedRoom?.images?.[0]} 
+                                          alt={slot.selectedRoom?.type}
                                           className="w-20 h-16 object-cover rounded"
                                         />
                                         <div>
                                           <h4 className="font-bold text-black">{slot.hotelDetails}</h4>
-                                          <p className="text-gray-600 text-sm">{slot.selectedRoom.type}</p>
-                                          <p className="text-gray-600 text-sm">{slot.selectedRoom.price} per night</p>
-                                          <p className="text-gray-600 text-sm">{slot.selectedRoom.capacity} {slot.selectedRoom.capacity === 1 ? 'guest' : 'guests'}</p>
+                                          <p className="text-gray-600 text-sm">{slot.selectedRoom?.type}</p>
+                                          <p className="text-gray-600 text-sm">{slot.selectedRoom?.price} per night</p>
+                                          <p className="text-gray-600 text-sm">{slot.selectedRoom?.capacity} {slot.selectedRoom?.capacity === 1 ? 'guest' : 'guests'}</p>
                                         </div>
                                       </div>
                                     </div>
@@ -1671,21 +2377,36 @@ export default function TripsPage() {
                             ) : null}
 
                             {/* User's Transportation Choices */}
-                            {trip.itinerary && trip.itinerary.some(day => day.slots.some(slot => slot.transportNeeded && slot.carDetails)) ? (
+                            {trip.itinerary && trip.itinerary.some(day => day.slots.some(slot => slot.transportNeeded && slot.selectedCar)) ? (
                               <div>
                                 <h3 className="text-2xl font-bold text-black mb-4">Your Transportation</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  {[...new Set(trip.itinerary.flatMap(day => day.slots.filter(slot => slot.transportNeeded && slot.carDetails).map(slot => slot.carDetails)))].map((vehicle, index) => (
-                                    <div key={index} className="border border-gray-200 p-4">
-                                      <div className="flex items-center gap-3">
-                                        <Car className="h-8 w-8 text-black" />
-                                        <div>
-                                          <h4 className="font-bold text-black">{vehicle as string}</h4>
-                                          <p className="text-gray-600 text-sm">Available for your activities</p>
+                                  {[...new Set(trip.itinerary.flatMap(day => day.slots.filter(slot => slot.transportNeeded && slot.selectedCar).map(slot => slot.selectedCar)).filter(Boolean).map(car => car.id))].map((carId) => {
+                                    const car = trip.itinerary.flatMap(day => day.slots.filter(slot => slot.transportNeeded && slot.selectedCar).map(slot => slot.selectedCar)).find(c => c && c.id === carId);
+                                    return car ? (
+                                      <div key={String(carId)} className="border border-gray-200 p-4">
+                                        <div className="flex items-start gap-3">
+                                          <img
+                                            src={car.image}
+                                            alt={car.name}
+                                            className="w-20 h-16 object-cover rounded"
+                                          />
+                                          <div>
+                                            <h4 className="font-bold text-black">{car.name}</h4>
+                                            <p className="text-gray-600 text-sm">{car.type} • {car.seats} seats</p>
+                                            <p className="text-gray-600 text-sm font-medium">{car.pricePerDay} per day</p>
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                              {car.features.slice(0, 2).map((feature, index) => (
+                                                <span key={index} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                                  {feature}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  ))}
+                                    ) : null;
+                                  })}
                                 </div>
                               </div>
                             ) : null}

@@ -1,213 +1,142 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
+import { signIn } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { User } from '@/types';
-import { ArrowLeft } from 'lucide-react';
 
 interface LoginFormProps {
-  onToggleMode: () => void;
+  onSuccess: () => void;
+  onSwitchToSignup: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProps) {
+  const { refreshAuth } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    name: '',
-    phone: '',
-    address: '',
-    role: 'customer' as User['role']
+    password: ''
   });
-  
-  const { login, register } = useAuth();
-  const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    setIsLogin(location.pathname === '/login');
-  }, [location.pathname]);
-
-  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (isLogin) {
-      const success = await login(formData.email, formData.password);
-      if (success) {
-        toast({ title: 'Welcome back!', description: 'Successfully logged in.' });
-        // Redirect based on user role - customers go to home page, others to dashboard
-        const userRole = JSON.parse(localStorage.getItem('safarPk_user') || '{}').role;
-        if (userRole === 'customer') {
-          navigate('/');
-        } else {
-          navigate('/dashboard');
-        }
-      } else {
-        toast({ 
-          title: 'Login failed', 
-          description: 'Invalid email or password.', 
-          variant: 'destructive' 
-        });
+    setLoading(true);
+    setError('');
+
+    try {
+      const { data, error: authError } = await signIn(formData.email, formData.password);
+
+      if (authError) {
+        setError(authError.message);
+        return;
       }
-    } else {
-      const success = await register({
-        email: formData.email,
-        password: formData.password,
-        name: formData.name,
-        phone: formData.phone,
-        address: formData.address,
-        role: formData.role
-      });
-      
-      if (success) {
-        toast({ 
-          title: 'Account created!', 
-          description: 'Welcome to SAFARPk.' 
-        });
-        // Redirect based on user role - customers go to home page, others to dashboard
-        if (formData.role === 'customer') {
-          navigate('/');
-        } else {
-          navigate('/dashboard');
-        }
-      } else {
-        toast({ 
-          title: 'Registration failed', 
-          description: 'Email already exists.', 
-          variant: 'destructive' 
-        });
+
+      if (data.user) {
+        // Refresh auth context to update navbar
+        await refreshAuth();
+        onSuccess();
       }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
-      <div className="w-full max-w-md">
-        
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">SAFARPk</CardTitle>
-            <CardDescription>
-              {isLogin ? 'Sign in to your account' : 'Create your account'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Enter your name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required={!isLogin}
-                  />
-                </div>
-              )}
-              
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required={!isLogin}
-                  />
-                </div>
-              )}
-              
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    type="text"
-                    placeholder="Enter your address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    required={!isLogin}
-                  />
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                />
-              </div>
-              
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="role">Account Type</Label>
-                  <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as User['role'] })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="customer">Customer</SelectItem>
-                      <SelectItem value="driver">Driver</SelectItem>
-                      <SelectItem value="hotel">Hotel Owner</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              
-              <Button type="submit" className="w-full">
-                {isLogin ? 'Sign In' : 'Create Account'}
-              </Button>
-            </form>
-            
-            <div className="mt-4 text-center">
-              <Button 
-                variant="link" 
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  if (isLogin) {
-                    navigate('/signup');
-                  } else {
-                    navigate('/login');
-                  }
-                }}
-                className="text-sm"
-              >
-                {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-              </Button>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+          <LogIn className="h-6 w-6" />
+          Sign In
+        </CardTitle>
+        <CardDescription>
+          Welcome back! Please enter your credentials to access your account.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email Address</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="pl-10"
+              />
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="pl-10 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800"
+          >
+            {loading ? 'Signing In...' : 'Sign In'}
+          </Button>
+
+          <div className="text-center pt-4">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <button
+                type="button"
+                onClick={onSwitchToSignup}
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Sign up here
+              </button>
+            </p>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
-};
+}
