@@ -14,6 +14,8 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   refreshAuth: () => Promise<void>;
+  isAuthenticated: boolean;
+  isCustomer: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,7 +87,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profile,
     loading,
     signOut: handleSignOut,
-    refreshAuth
+    refreshAuth,
+    isAuthenticated: !!user,
+    isCustomer: profile?.role === 'customer'
   };
 
   return (

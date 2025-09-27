@@ -7,14 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
-  DialogFooter 
+  DialogFooter
 } from '@/components/ui/dialog';
 import {
   Plus,
@@ -38,6 +38,10 @@ import {
   ChevronRight
 } from 'lucide-react';
 import Footer from '@/components/layout/Footer';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import AuthModal from '@/components/auth/AuthModal';
+import AuthRequiredModal from '@/components/AuthRequiredModal';
 
 // Mock data for Pakistan trips
 const pakistanTrips = [
@@ -1721,8 +1725,8 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
                             const room = rooms.find(r => r.type === roomType);
                             return (
                               <div key={roomIndex} className="flex items-start gap-3">
-                                <img 
-                                  src={room.image} 
+                                <img
+                                  src={room.images[0]}
                                   alt={roomType}
                                   className="w-12 h-8 object-cover rounded"
                                 />
@@ -1916,19 +1920,44 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
 };
 
 export default function TripsPage() {
+  const { user, profile, isAuthenticated, isCustomer, loading } = useAuth();
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [isCreateTripOpen, setIsCreateTripOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentStep, setCurrentStep] = useState(1);
   const [userTrips, setUserTrips] = useState([]);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAuthRequiredModalOpen, setIsAuthRequiredModalOpen] = useState(false);
 
+  // Load user trips from Supabase instead of localStorage
   useEffect(() => {
-    const storedTrips = localStorage.getItem('userTrips');
-    if (storedTrips) {
-      setUserTrips(JSON.parse(storedTrips));
+    const loadUserTrips = async () => {
+      if (isAuthenticated && user) {
+        try {
+          const { data, error } = await supabase
+            .from('trips')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Error loading trips:', error);
+          } else {
+            setUserTrips(data || []);
+          }
+        } catch (error) {
+          console.error('Error loading trips:', error);
+        }
+      } else {
+        setUserTrips([]);
+      }
+    };
+
+    if (!loading) {
+      loadUserTrips();
     }
-  }, []);
+  }, [isAuthenticated, user, loading]);
   
   const [tripForm, setTripForm] = useState({
     name: '',
@@ -1956,48 +1985,104 @@ export default function TripsPage() {
     });
   }, [searchTerm, selectedCategory, allTrips]);
 
-  const handleCreateTrip = () => {
-    const newTrip = {
-      id: Date.now(), // Simple unique ID
-      name: tripForm.name,
-      description: tripForm.preferences || "A custom trip created by you!",
-      duration: `${getDaysArray(tripForm.startDate, tripForm.endDate).length} days`,
-      price: tripForm.budget ? `PKR ${tripForm.budget}` : "Price on request",
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300&fit=crop", // Placeholder image
-      destinations: tripForm.itinerary.flatMap(day => day.slots.map(slot => slot.location)).filter((value, index, self) => self.indexOf(value) === index && value !== ''),
-      highlights: tripForm.itinerary.flatMap(day => day.slots.map(slot => slot.activity)).filter((value, index, self) => self.indexOf(value) === index && value !== ''),
-      difficulty: "Custom", // Or derive from itinerary
-      groupSize: `${tripForm.numberOfPeople} people`,
-      rating: 5.0, // Default rating for user-created trips
-      reviews: 0,
-      category: "Custom",
-      // Store user-created data
-      numberOfPeople: tripForm.numberOfPeople,
-      budget: tripForm.budget,
-      preferences: tripForm.preferences,
-      startDate: tripForm.startDate,
-      endDate: tripForm.endDate,
-      itinerary: tripForm.itinerary, // Store the complete itinerary with rooms and vehicles
-    };
+  const handleCreateTrip = async () => {
+    if (!isAuthenticated || !user) {
+      setIsAuthRequiredModalOpen(true);
+      return;
+    }
 
-    const updatedUserTrips = [...userTrips, newTrip];
-    setUserTrips(updatedUserTrips);
-    localStorage.setItem('userTrips', JSON.stringify(updatedUserTrips));
+    if (!isCustomer) {
+      setIsAuthRequiredModalOpen(true);
+      return;
+    }
 
-    setIsCreateTripOpen(false);
-    setCurrentStep(1);
-    setTripForm({
-      name: '',
-      numberOfPeople: 1,
-      startDate: '',
-      endDate: '',
-      needsCar: false,
-      carType: 'Sedan',
-      budget: '',
-      preferences: '',
-      itinerary: [],
-    });
-    alert('Your custom trip has been created!');
+    try {
+      // Extract destinations from itinerary
+      const destinations = [...new Set(
+        tripForm.itinerary.flatMap(day =>
+          day.slots?.map(slot => slot.location).filter(Boolean) || []
+        )
+      )];
+
+      // Extract highlights from activities
+      const highlights = [...new Set(
+        tripForm.itinerary.flatMap(day =>
+          day.slots?.map(slot => slot.activity).filter(Boolean) || []
+        )
+      )];
+
+      // Create comprehensive trip data
+      const tripData = {
+        user_id: user.id,
+        name: tripForm.name,
+        description: tripForm.preferences || `A custom ${tripForm.numberOfPeople}-person trip to explore Pakistan's beautiful destinations.`,
+        start_date: tripForm.startDate,
+        end_date: tripForm.endDate,
+        budget: tripForm.budget ? parseFloat(tripForm.budget) : null,
+        number_of_people: tripForm.numberOfPeople,
+        needs_car: tripForm.needsCar,
+        car_type: tripForm.needsCar ? tripForm.carType : null,
+        preferences: tripForm.preferences,
+        status: 'planned',
+        trip_type: 'custom',
+        destinations: destinations.length > 0 ? destinations : null,
+        highlights: highlights.length > 0 ? highlights : null,
+        itinerary: tripForm.itinerary, // Store the complete itinerary with rooms and vehicles
+      };
+
+      console.log('Creating trip with data:', tripData);
+
+      const { data, error } = await supabase
+        .from('trips')
+        .insert(tripData)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error creating trip:', error);
+        alert(`Failed to create trip: ${error.message}`);
+        return;
+      }
+
+      console.log('Trip created successfully:', data);
+
+      // Add the new trip to local state
+      setUserTrips(prev => [data, ...prev]);
+
+      setIsCreateTripOpen(false);
+      setCurrentStep(1);
+      setTripForm({
+        name: '',
+        numberOfPeople: 1,
+        startDate: '',
+        endDate: '',
+        needsCar: false,
+        carType: 'Sedan',
+        budget: '',
+        preferences: '',
+        itinerary: [],
+      });
+
+      alert(`🎉 Your custom trip "${tripData.name}" has been created successfully! You can view it in your trips section.`);
+    } catch (error) {
+      console.error('Error creating trip:', error);
+      alert('Failed to create trip. Please try again.');
+    }
+  };
+
+  // Handle Create Trip button click with authentication checks
+  const handleCreateTripClick = () => {
+    if (!isAuthenticated) {
+      setIsAuthRequiredModalOpen(true);
+      return;
+    }
+
+    if (!isCustomer) {
+      setIsAuthRequiredModalOpen(true);
+      return;
+    }
+
+    setIsCreateTripOpen(true);
   };
 
   const getDaysArray = (start: string, end: string) => {
@@ -2010,6 +2095,50 @@ export default function TripsPage() {
       currentDate.setDate(currentDate.getDate() + 1);
     }
     return days;
+  };
+
+  const handleDeleteTrip = async (tripId: string) => {
+    if (!confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('trips')
+        .delete()
+        .eq('id', tripId)
+        .eq('user_id', user?.id); // Additional security check
+
+      if (error) {
+        console.error('Error deleting trip:', error);
+        alert('Failed to delete trip. Please try again.');
+        return;
+      }
+
+      // Remove trip from local state
+      setUserTrips(prev => prev.filter(trip => trip.id !== tripId));
+      alert('Trip deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+      alert('Failed to delete trip. Please try again.');
+    }
+  };
+
+  const formatTripDates = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    const startStr = start.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+    const endStr = end.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    return `${startStr} - ${endStr}`;
   };
 
   const handleNextStep = () => {
@@ -2056,10 +2185,10 @@ export default function TripsPage() {
           setCurrentStep={setCurrentStep}
         />;
       default:
-        return <TripDetailsStep 
-          tripForm={tripForm} 
-          setTripForm={setTripForm} 
-          handleNextStep={handleNextStep} 
+        return <TripDetailsStep
+          tripForm={tripForm}
+          setTripForm={setTripForm}
+          handleNextStep={handleNextStep}
         />;
     }
   };
@@ -2077,9 +2206,9 @@ export default function TripsPage() {
             <p className="text-xl md:text-2xl text-gray-300 mb-8">
               Explore breathtaking landscapes, rich culture, and unforgettable adventures
             </p>
-            <Button 
-              onClick={() => setIsCreateTripOpen(true)}
-              size="lg" 
+            <Button
+              onClick={handleCreateTripClick}
+              size="lg"
               className="bg-white text-black hover:bg-gray-100 text-lg px-8 py-3"
             >
               <Plus className="mr-2 h-5 w-5" />
@@ -2089,87 +2218,198 @@ export default function TripsPage() {
         </div>
       </div>
 
-      {/* My Trips Section */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">My Created Trips</h2>
-        {userTrips.length === 0 ? (
-          <div className="text-center py-16">
-            <Mountain className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">No trips created yet</h3>
-            <p className="text-gray-500">Create a new trip to see it here!</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {userTrips.map((trip) => (
-              <Card key={trip.id} className="group hover:shadow-2xl transition-all duration-300 border-gray-200 overflow-hidden">
-                <div className="relative">
-                  <img
-                    src={trip.image}
-                    alt={trip.name}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <Badge className="bg-black/80 text-white">{trip.category}</Badge>
-                  </div>
-                  <div className="absolute top-4 right-4">
-                    <Badge variant="secondary" className="bg-white/90 text-black">
-                      {trip.duration}
-                    </Badge>
-                  </div>
-                </div>
+      {/* My Trips Section - Only show for authenticated customers */}
+      {isAuthenticated && isCustomer && (
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">My Created Trips</h2>
+          {loading ? (
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-400 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading your trips...</p>
+            </div>
+          ) : userTrips.length === 0 ? (
+            <div className="text-center py-16">
+              <Mountain className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">No trips created yet</h3>
+              <p className="text-gray-500 mb-4">Create your first custom trip to start your Pakistan adventure!</p>
+              <Button
+                onClick={handleCreateTripClick}
+                className="bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Your First Trip
+              </Button>
+            </div>
+          ) :
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+            {userTrips.map((trip) => {
+              // Calculate derived data for trips from Supabase
+              const duration = trip.start_date && trip.end_date ?
+                `${getDaysArray(trip.start_date, trip.end_date).length} days` :
+                'Custom duration';
 
-                <CardContent className="p-6">
-                  <div className="mb-3">
-                    <h3 className="text-xl font-bold text-gray-800 group-hover:text-black transition-colors">
-                      {trip.name}
-                    </h3>
-                    <p className="text-gray-600 text-sm mt-1 line-clamp-2">{trip.description}</p>
-                  </div>
+              // Use destinations from database if available, otherwise extract from itinerary
+              const destinations: string[] = trip.destinations ||
+                (trip.itinerary ?
+                  [...new Set(trip.itinerary.flatMap(day => day.slots?.map(slot => slot.location) || []).filter(Boolean))] as string[] :
+                  []);
 
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                      <span className="font-medium text-sm">{trip.rating}</span>
-                      <span className="text-gray-500 text-sm ml-1">({trip.reviews})</span>
+              // Use highlights from database if available, otherwise extract from itinerary
+              const highlights: string[] = trip.highlights ||
+                (trip.itinerary ?
+                  [...new Set(trip.itinerary.flatMap(day => day.slots?.map(slot => slot.activity) || []).filter(Boolean))] as string[] :
+                  []);
+
+              const price = trip.budget ? `PKR ${trip.budget.toLocaleString()}` : 'Price on request';
+              const people = trip.number_of_people || 1;
+
+              return (
+                <Card key={trip.id} className="group hover:shadow-xl hover:-translate-y-2 transition-all duration-500 border-0 bg-white rounded-2xl overflow-hidden relative">
+                  {/* Gradient Overlay Background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 opacity-50"></div>
+
+                  {/* Content Container */}
+                  <div className="relative z-10">
+                    {/* Header with Gradient */}
+                   <div className="relative bg-gradient-to-r from-black via-gray-900 to-gray-800 p-6 text-white">
+  {/* Gradient overlay pattern */}
+  <div className="absolute inset-0 opacity-20">
+    <div className="w-full h-full bg-white/5 bg-[radial-gradient(circle_at_1px_1px,_white_1px,_transparent_0)] bg-[length:20px_20px]"></div>
+  </div>
+
+  <div className="relative flex items-start justify-between mb-4">
+    <div className="flex items-center gap-3">
+      <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm">
+        <Mountain className="h-6 w-6 text-white" />
+      </div>
+      <div>
+        <Badge className="bg-white/10 text-white border-white/20 backdrop-blur-sm mb-2">
+          Custom Trip
+        </Badge>
+        <h3 className="text-xl font-bold text-white leading-tight">
+          {trip.name}
+        </h3>
+      </div>
+    </div>
+
+    <div className="text-right">
+      <Badge
+        variant="secondary"
+        className="bg-white/90 text-gray-900 font-semibold"
+      >
+        {duration}
+      </Badge>
+    </div>
+  </div>
+
+  <p className="text-gray-200 text-sm leading-relaxed line-clamp-2">
+    {trip.description}
+  </p>
+</div>
+
+
+                  <CardContent className="p-6 space-y-6">
+                    {/* Trip Stats */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
+                        <div className="flex items-center justify-center mb-2">
+                          <div className="p-2 bg-green-100 rounded-lg">
+                            <Users className="h-4 w-4 text-green-600" />
+                          </div>
+                        </div>
+                        <div className="text-lg font-bold text-gray-900">{people}</div>
+                        <div className="text-xs text-gray-500">{people === 1 ? 'Person' : 'People'}</div>
+                      </div>
+                      <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
+                        <div className="flex items-center justify-center mb-2">
+                          <div className="p-2 bg-purple-100 rounded-lg">
+                            <Calendar className="h-4 w-4 text-purple-600" />
+                          </div>
+                        </div>
+                        <div className="text-lg font-bold text-gray-900 capitalize">{trip.status || 'Planned'}</div>
+                        <div className="text-xs text-gray-500">Status</div>
+                      </div>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Users className="h-4 w-4 mr-1" />
-                      {trip.groupSize}
-                    </div>
-                  </div>
 
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {trip.destinations.slice(0, 2).map((dest, index) => (
-                      <Badge key={index} variant="outline" className="text-xs border-gray-300">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {dest}
-                      </Badge>
-                    ))}
-                    {trip.destinations.length > 2 && (
-                      <Badge variant="outline" className="text-xs border-gray-300">
-                        +{trip.destinations.length - 2} more
-                      </Badge>
+                    {/* Destinations */}
+                    {destinations.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="p-1 bg-orange-100 rounded">
+                            <MapPin className="h-4 w-4 text-orange-600" />
+                          </div>
+                          <h4 className="font-semibold text-gray-900 text-sm">Destinations</h4>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {destinations.slice(0, 2).map((dest, index) => (
+                            <Badge key={index} className="bg-orange-50 text-orange-700 hover:bg-orange-100 border-orange-200 rounded-lg px-3 py-1">
+                              {dest}
+                            </Badge>
+                          ))}
+                          {destinations.length > 2 && (
+                            <Badge className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200 rounded-lg px-3 py-1">
+                              +{destinations.length - 2} more
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     )}
-                  </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-2xl font-bold text-gray-800">{trip.price}</span>
-                      <span className="text-gray-500 text-sm ml-1">per person</span>
-                    </div>
+                    {/* Activities */}
+                    {highlights.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="p-1 bg-blue-100 rounded">
+                            <Camera className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <h4 className="font-semibold text-gray-900 text-sm">Activities</h4>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {highlights.slice(0, 3).map((highlight, index) => (
+                            <Badge key={index} className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200 rounded-lg px-3 py-1">
+                              {highlight}
+                            </Badge>
+                          ))}
+                          {highlights.length > 3 && (
+                            <Badge className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200 rounded-lg px-3 py-1">
+                              +{highlights.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
-                    <Dialog>
-                      <DialogTrigger asChild>
+                    {/* Price and Actions */}
+                    <div className="border-t border-gray-100 pt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-200">
+                          <div className="text-sm text-green-600 font-medium">Total Budget</div>
+                          <div className="text-2xl font-bold text-green-700">{price}</div>
+                        </div>
+
+                        {trip.needs_car && (
+                          <div className="text-center">
+                            <div className="p-2 bg-blue-100 rounded-lg mb-1">
+                              <Car className="h-5 w-5 text-blue-600 mx-auto" />
+                            </div>
+                            <div className="text-xs text-blue-600 font-medium">Transport</div>
+                            <div className="text-xs text-gray-500">{trip.car_type || 'Required'}</div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Dialog>
+                        <DialogTrigger asChild>
                         <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                          onClick={() => setSelectedTrip(trip)}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </Button>
-                      </DialogTrigger>
+  className="flex-1 bg-gradient-to-r from-black via-gray-900 to-gray-800 text-white hover:from-gray-800 hover:via-gray-900 hover:to-black rounded-xl py-3 font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+  onClick={() => setSelectedTrip(trip)}
+>
+  <Eye className="mr-2 h-4 w-4" />
+  View Details
+</Button>
+
+                        </DialogTrigger>
                       <DialogContent className="max-h-[95vh] overflow-y-auto sm:max-w-5xl lg:max-w-7xl bg-white p-0">
                         {/* Header */}
                         <div className="bg-white border-b border-gray-200 p-6">
@@ -2180,7 +2420,7 @@ export default function TripsPage() {
                             </div>
                             <div className="text-right">
                               <div className="text-4xl font-bold text-black">{trip.price}</div>
-                              <div className="text-gray-500">per person</div>
+                              
                             </div>
                           </div>
                         </div>
@@ -2188,41 +2428,80 @@ export default function TripsPage() {
                         <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
                           {/* Main Content */}
                           <div className="lg:col-span-3 p-6 space-y-8">
-                            {/* Hero Image */}
-                            <div className="relative">
-                              <img
-                                src={trip.image}
-                                alt={trip.name}
-                                className="w-full h-96 object-cover"
-                              />
-                              <div className="absolute top-4 left-4 bg-black text-white px-3 py-1 text-sm font-medium">
-                                {trip.category}
+                            {/* Trip Header */}
+                            <div className="bg-gradient-to-r from-black-50 to-indigo-50 rounded-lg p-6 border border-black-200">
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-black-100 rounded-lg">
+                                    <Mountain className="h-6 w-6 text-black-600" />
+                                  </div>
+                                  <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">{trip.name}</h2>
+                                    {trip.category && (
+                                      <span className="inline-block mt-1 px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-full">
+                                        {trip.category}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-sm text-gray-500">Total Budget</div>
+                                  <div className="text-2xl font-bold text-blue-600">
+                                    {trip.budget ? `Rs. ${trip.budget.toLocaleString()}` : 'Custom Quote'}
+                                  </div>
+                                </div>
                               </div>
+                              <p className="text-gray-700 leading-relaxed">{trip.description}</p>
                             </div>
 
-                            {/* Quick Stats */}
-                            <div className="grid grid-cols-4 gap-4">
-                              <div className="text-center p-4 border border-gray-200">
-                                <Calendar className="h-6 w-6 mx-auto mb-2 text-black" />
-                                <div className="font-bold text-black">{trip.duration}</div>
-                                <div className="text-sm text-gray-500">Duration</div>
-                              </div>
-                              <div className="text-center p-4 border border-gray-200">
-                                <Users className="h-6 w-6 mx-auto mb-2 text-black" />
-                                <div className="font-bold text-black">{trip.groupSize}</div>
-                                <div className="text-sm text-gray-500">Group Size</div>
-                              </div>
-                              <div className="text-center p-4 border border-gray-200">
-                                <Star className="h-6 w-6 mx-auto mb-2 text-black fill-current" />
-                                <div className="font-bold text-black">{trip.rating}/5</div>
-                                <div className="text-sm text-gray-500">Rating</div>
-                              </div>
-                              <div className="text-center p-4 border border-gray-200">
-                                <div className="w-6 h-6 mx-auto mb-2 bg-black rounded-full flex items-center justify-center">
-                                  <span className="text-white text-xs font-bold">!</span>
+                            {/* Trip Overview */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                  <Calendar className="h-8 w-8 text-blue-600" />
+                                  <div>
+                                    <div className="text-sm text-gray-500">Duration</div>
+                                    <div className="font-bold text-gray-900">
+                                      {trip.start_date && trip.end_date ?
+                                        `${Math.ceil((new Date(trip.end_date).getTime() - new Date(trip.start_date).getTime()) / (1000 * 60 * 60 * 24))} days`
+                                        : (trip.duration || 'Custom')
+                                      }
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="font-bold text-black">{trip.difficulty}</div>
-                                <div className="text-sm text-gray-500">Difficulty</div>
+                              </div>
+                              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                  <Users className="h-8 w-8 text-green-600" />
+                                  <div>
+                                    <div className="text-sm text-gray-500">Group Size</div>
+                                    <div className="font-bold text-gray-900">
+                                      {trip.number_of_people || trip.groupSize || 'N/A'} people
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                  <Car className="h-8 w-8 text-orange-600" />
+                                  <div>
+                                    <div className="text-sm text-gray-500">Transportation</div>
+                                    <div className="font-bold text-gray-900">
+                                      {trip.needs_car ? (trip.car_type || 'Required') : 'Not Required'}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                  <Clock className="h-8 w-8 text-purple-600" />
+                                  <div>
+                                    <div className="text-sm text-gray-500">Status</div>
+                                    <div className="font-bold text-gray-900 capitalize">
+                                      {trip.status || 'Planned'}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
 
@@ -2230,12 +2509,16 @@ export default function TripsPage() {
                             <div>
                               <h3 className="text-2xl font-bold text-black mb-4">Destinations</h3>
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {trip.destinations.map((dest, index) => (
+                                {trip.destinations && trip.destinations.length > 0 ? trip.destinations.map((dest, index) => (
                                   <div key={index} className="flex items-center gap-2 p-3 border border-gray-200">
                                     <MapPin className="h-4 w-4 text-black" />
                                     <span className="font-medium text-black">{dest}</span>
                                   </div>
-                                ))}
+                                )) : (
+                                  <div className="col-span-full text-gray-500 text-center py-4">
+                                    No destinations specified
+                                  </div>
+                                )}
                               </div>
                             </div>
 
@@ -2243,83 +2526,130 @@ export default function TripsPage() {
                             <div>
                               <h3 className="text-2xl font-bold text-black mb-4">Highlights</h3>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {trip.highlights.map((highlight, index) => (
+                                {trip.highlights && trip.highlights.length > 0 ? trip.highlights.map((highlight, index) => (
                                   <div key={index} className="flex items-start gap-3 p-3 border border-gray-200">
                                     <Camera className="h-4 w-4 text-black mt-1" />
                                     <span className="text-black">{highlight}</span>
                                   </div>
-                                ))}
+                                )) : (
+                                  <div className="col-span-full text-gray-500 text-center py-4">
+                                    No highlights specified
+                                  </div>
+                                )}
                               </div>
                             </div>
 
                             {/* User's Custom Itinerary */}
                             {trip.itinerary && trip.itinerary.length > 0 ? (
                               <div>
-                                <h3 className="text-2xl font-bold text-black mb-4">Your Itinerary</h3>
-                                <div className="space-y-4">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                                  <Calendar className="h-7 w-7 text-blue-600" />
+                                  Your Itinerary
+                                </h3>
+                                <div className="space-y-6">
                                   {trip.itinerary.map((day, dayIndex) => (
-                                    <div key={day.date} className="border border-gray-200 p-4">
-                                      <h4 className="font-bold text-lg text-black mb-3">
-                                        Day {dayIndex + 1} - {new Date(day.date).toLocaleDateString('en-US', { 
-                                          weekday: 'long', 
-                                          month: 'short', 
-                                          day: 'numeric' 
-                                        })}
-                                      </h4>
+                                    <div key={day.date} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                                        <h4 className="font-bold text-xl text-gray-900 flex items-center gap-3">
+                                          <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                                            {dayIndex + 1}
+                                          </div>
+                                          {new Date(day.date).toLocaleDateString('en-US', {
+                                            weekday: 'long',
+                                            month: 'long',
+                                            day: 'numeric'
+                                          })}
+                                        </h4>
+                                      </div>
+                                      <div className="p-6">
                                       {day.slots.length === 0 ? (
                                         <p className="text-gray-500 italic">No activities planned</p>
                                       ) : (
-                                        <div className="space-y-3">
+                                        <div className="space-y-4">
                                           {day.slots.map((slot) => (
-                                            <div key={slot.id} className="border-l-2 border-gray-300 pl-4">
-                                              <div className="flex items-center gap-3 mb-2">
-                                                <Clock className="h-4 w-4 text-black" />
-                                                <span className="text-black font-medium">{slot.startTime} - {slot.endTime}</span>
-                                                <span className="text-gray-600">{slot.activity}</span>
+                                            <div key={slot.id} className="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500 shadow-sm">
+                                              <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-3">
+                                                  <div className="p-2 bg-blue-100 rounded-lg">
+                                                    <Clock className="h-4 w-4 text-blue-600" />
+                                                  </div>
+                                                  <div>
+                                                    <span className="text-blue-600 font-bold text-sm">{slot.startTime} - {slot.endTime}</span>
+                                                    <h5 className="font-semibold text-gray-900 text-lg">{slot.activity}</h5>
+                                                  </div>
+                                                </div>
+                                                {slot.transportNeeded && (
+                                                  <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 rounded-full">
+                                                    <Car className="h-3 w-3 text-orange-600" />
+                                                    <span className="text-xs text-orange-600 font-medium">Transport</span>
+                                                  </div>
+                                                )}
                                               </div>
-                                              <div className="flex items-center gap-2 mb-2">
-                                                <MapPin className="h-4 w-4 text-black" />
-                                                <span className="text-black">{slot.location}</span>
+
+                                              <div className="flex items-center gap-2 mb-3">
+                                                <MapPin className="h-4 w-4 text-gray-500" />
+                                                <span className="text-gray-700 font-medium">{slot.location}</span>
                                               </div>
                                               
                                               {/* Hotel Details */}
                                               {slot.hotelRoomNeeded && slot.hotelDetails && (
-                                                <div className="bg-gray-50 p-3 rounded mb-2">
-                                                  <div className="flex items-start gap-3">
-                                                    <Star className="h-4 w-4 text-black mt-1" />
-                                                    <div className="flex-1">
-                                                      <p className="font-medium text-black">{slot.hotelDetails}</p>
-                                                      {slot.selectedRoom && (
-                                                        <div className="flex items-start gap-3 mt-2">
-                                                          <img 
-                                                            src={slot.selectedRoom?.images?.[0]} 
-                                                            alt={slot.selectedRoom?.type}
-                                                            className="w-16 h-12 object-cover rounded"
-                                                          />
-                                                          <div>
-                                                            <p className="text-sm font-medium text-black">{slot.selectedRoom?.type}</p>
-                                                            <p className="text-xs text-gray-600">{slot.selectedRoom?.price} per night</p>
+                                                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-3">
+                                                  <div className="flex items-center gap-2 mb-3">
+                                                    <div className="p-1 bg-yellow-100 rounded">
+                                                      <Star className="h-4 w-4 text-yellow-600" />
+                                                    </div>
+                                                    <h6 className="font-semibold text-gray-900">Hotel Accommodation</h6>
+                                                  </div>
+                                                  <p className="text-gray-700 mb-3">{slot.hotelDetails}</p>
+                                                  {slot.selectedRoom && (
+                                                    <div className="bg-gray-50 rounded-lg p-3">
+                                                      <div className="flex items-start gap-4">
+                                                        <img
+                                                          src={slot.selectedRoom?.images?.[0]}
+                                                          alt={slot.selectedRoom?.type}
+                                                          className="w-20 h-16 object-cover rounded-lg shadow-sm"
+                                                        />
+                                                        <div className="flex-1">
+                                                          <h6 className="font-semibold text-gray-900">{slot.selectedRoom?.type}</h6>
+                                                          <p className="text-sm text-gray-600 mb-1">{slot.selectedRoom?.description}</p>
+                                                          <div className="flex items-center justify-between">
+                                                            <span className="text-sm font-bold text-green-600">{slot.selectedRoom?.price} per night</span>
+                                                            <span className="text-xs text-gray-500">Capacity: {slot.selectedRoom?.capacity} guests</span>
                                                           </div>
                                                         </div>
-                                                      )}
+                                                      </div>
                                                     </div>
-                                                  </div>
+                                                  )}
                                                 </div>
                                               )}
                                               
                                               {/* Vehicle Details */}
                                               {slot.transportNeeded && slot.selectedCar && (
-                                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-2">
-                                                  <div className="flex items-start gap-3">
-                                                    <img
-                                                      src={slot.selectedCar?.images?.[0]}
-                                                      alt={slot.selectedCar?.name}
-                                                      className="w-16 h-12 object-cover rounded"
-                                                    />
-                                                    <div>
-                                                      <p className="font-medium text-black">{slot.selectedCar?.name}</p>
-                                                      <p className="text-sm text-gray-600">{slot.selectedCar?.type} • {slot.selectedCar?.seats} seats</p>
-                                                      <p className="text-sm font-medium text-orange-600">{slot.selectedCar?.pricePerDay} per day</p>
+                                                <div className="bg-white border border-orange-200 rounded-lg p-4 mb-3">
+                                                  <div className="flex items-center gap-2 mb-3">
+                                                    <div className="p-1 bg-orange-100 rounded">
+                                                      <Car className="h-4 w-4 text-orange-600" />
+                                                    </div>
+                                                    <h6 className="font-semibold text-gray-900">Transportation</h6>
+                                                  </div>
+                                                  <div className="bg-gray-50 rounded-lg p-3">
+                                                    <div className="flex items-start gap-4">
+                                                      <img
+                                                        src={slot.selectedCar?.images?.[0]}
+                                                        alt={slot.selectedCar?.name}
+                                                        className="w-20 h-16 object-cover rounded-lg shadow-sm"
+                                                      />
+                                                      <div className="flex-1">
+                                                        <h6 className="font-semibold text-gray-900">{slot.selectedCar?.name}</h6>
+                                                        <p className="text-sm text-gray-600 mb-1">{slot.selectedCar?.description}</p>
+                                                        <div className="flex items-center justify-between">
+                                                          <div className="flex items-center gap-3">
+                                                            <span className="text-sm font-bold text-orange-600">{slot.selectedCar?.pricePerDay} per day</span>
+                                                            <span className="text-xs text-gray-500">{slot.selectedCar?.type}</span>
+                                                          </div>
+                                                          <span className="text-xs text-gray-500">Seats: {slot.selectedCar?.seats}</span>
+                                                        </div>
+                                                      </div>
                                                     </div>
                                                   </div>
                                                 </div>
@@ -2327,15 +2657,21 @@ export default function TripsPage() {
                                               
                                               {/* Notes */}
                                               {slot.notes && (
-                                                <div className="text-sm text-gray-600 italic">
-                                                  <Eye className="h-3 w-3 inline mr-1" />
-                                                  {slot.notes}
+                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                                  <div className="flex items-start gap-2">
+                                                    <Eye className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                                    <div>
+                                                      <h6 className="font-medium text-blue-900 text-sm mb-1">Notes</h6>
+                                                      <p className="text-sm text-blue-800">{slot.notes}</p>
+                                                    </div>
+                                                  </div>
                                                 </div>
                                               )}
                                             </div>
                                           ))}
                                         </div>
                                       )}
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
@@ -2349,118 +2685,19 @@ export default function TripsPage() {
                                 </div>
                               </div>
                             )}
-
-                            {/* User's Accommodation Choices */}
-                            {trip.itinerary && trip.itinerary.some(day => day.slots.some(slot => slot.hotelRoomNeeded && slot.selectedRoom)) ? (
-                              <div>
-                                <h3 className="text-2xl font-bold text-black mb-4">Your Accommodation</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  {trip.itinerary.flatMap(day => day.slots.filter(slot => slot.hotelRoomNeeded && slot.selectedRoom)).map((slot, index) => (
-                                    <div key={index} className="border border-gray-200 p-4">
-                                      <div className="flex items-start gap-3">
-                                        <img 
-                                          src={slot.selectedRoom?.images?.[0]} 
-                                          alt={slot.selectedRoom?.type}
-                                          className="w-20 h-16 object-cover rounded"
-                                        />
-                                        <div>
-                                          <h4 className="font-bold text-black">{slot.hotelDetails}</h4>
-                                          <p className="text-gray-600 text-sm">{slot.selectedRoom?.type}</p>
-                                          <p className="text-gray-600 text-sm">{slot.selectedRoom?.price} per night</p>
-                                          <p className="text-gray-600 text-sm">{slot.selectedRoom?.capacity} {slot.selectedRoom?.capacity === 1 ? 'guest' : 'guests'}</p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : null}
-
-                            {/* User's Transportation Choices */}
-                            {trip.itinerary && trip.itinerary.some(day => day.slots.some(slot => slot.transportNeeded && slot.selectedCar)) ? (
-                              <div>
-                                <h3 className="text-2xl font-bold text-black mb-4">Your Transportation</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  {[...new Set(trip.itinerary.flatMap(day => day.slots.filter(slot => slot.transportNeeded && slot.selectedCar).map(slot => slot.selectedCar)).filter(Boolean).map(car => car.id))].map((carId) => {
-                                    const car = trip.itinerary.flatMap(day => day.slots.filter(slot => slot.transportNeeded && slot.selectedCar).map(slot => slot.selectedCar)).find(c => c && c.id === carId);
-                                    return car ? (
-                                      <div key={String(carId)} className="border border-gray-200 p-4">
-                                        <div className="flex items-start gap-3">
-                                          <img
-                                            src={car.image}
-                                            alt={car.name}
-                                            className="w-20 h-16 object-cover rounded"
-                                          />
-                                          <div>
-                                            <h4 className="font-bold text-black">{car.name}</h4>
-                                            <p className="text-gray-600 text-sm">{car.type} • {car.seats} seats</p>
-                                            <p className="text-gray-600 text-sm font-medium">{car.pricePerDay} per day</p>
-                                            <div className="flex flex-wrap gap-1 mt-1">
-                                              {car.features.slice(0, 2).map((feature, index) => (
-                                                <span key={index} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                                  {feature}
-                                                </span>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    ) : null;
-                                  })}
-                                </div>
-                              </div>
-                            ) : null}
                           </div>
 
                           {/* Sidebar */}
                           <div className="bg-gray-50 p-6 space-y-6">
                             {/* Booking Card */}
-                            <div className="bg-white border border-gray-200 p-6">
-                              <h4 className="font-bold text-lg text-black mb-4">Book This Trip</h4>
-                              <div className="text-center mb-4">
-                                <div className="text-3xl font-bold text-black">{trip.price}</div>
-                                <div className="text-gray-500">per person</div>
-                              </div>
-                              <Button className="w-full bg-black text-white hover:bg-gray-800 py-3 mb-3">
-                                <Plane className="mr-2 h-4 w-4" />
-                                Book Now
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="w-full border border-black text-black hover:bg-black hover:text-white"
-                                onClick={() => {
-                                  setIsCreateTripOpen(true);
-                                  setTripForm(prev => ({
-                                    ...prev,
-                                    name: `Custom ${trip.name}`,
-                                  }));
-                                }}
-                              >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Customize Trip
-                              </Button>
-                            </div>
+                           
 
                             {/* Trip Details */}
                             <div className="bg-white border border-gray-200 p-6">
                               <h4 className="font-bold text-lg text-black mb-4">Trip Details</h4>
                               <div className="space-y-3 text-sm">
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Duration:</span>
-                                  <span className="text-black font-medium">{trip.duration}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Group Size:</span>
-                                  <span className="text-black font-medium">{trip.groupSize}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Difficulty:</span>
-                                  <span className="text-black font-medium">{trip.difficulty}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Rating:</span>
-                                  <span className="text-black font-medium">{trip.rating}/5 ({trip.reviews} reviews)</span>
-                                </div>
+                               
+                                
                                 {/* Show user's budget if available */}
                                 {trip.budget && (
                                   <div className="flex justify-between">
@@ -2499,14 +2736,25 @@ export default function TripsPage() {
                         </div>
                       </DialogContent>
                     </Dialog>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
 
+                        <Button
+                          variant="outline"
+                          className="px-4 py-3 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl font-semibold transition-all duration-300"
+                          onClick={() => handleDeleteTrip(trip.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                  </div>
+                </Card>
+              );
+})}
+          </div>
+          
+ } </div>
+      )}
       {/* Search and Filter Section (Existing Trips) */}
    
 
@@ -2519,11 +2767,11 @@ export default function TripsPage() {
               Step {currentStep} of 3: {currentStep === 1 ? 'Trip Details' : currentStep === 2 ? 'Itinerary Builder' : 'Review & Confirm'}
             </DialogDescription>
           </DialogHeader>
-          
+
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
-            <div 
-              className="bg-gradient-to-r from-gray-800 to-black h-2 rounded-full transition-all duration-300" 
+            <div
+              className="bg-gradient-to-r from-gray-800 to-black h-2 rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / 3) * 100}%` }}
             ></div>
           </div>
@@ -2531,7 +2779,26 @@ export default function TripsPage() {
           {renderCreateTripStep()}
         </DialogContent>
       </Dialog>
+
+      {/* Authentication Required Modal */}
+      <AuthRequiredModal
+        isOpen={isAuthRequiredModalOpen}
+        onClose={() => setIsAuthRequiredModalOpen(false)}
+        onSignInClick={() => setIsAuthModalOpen(true)}
+        isAuthenticated={isAuthenticated}
+        isCustomer={isCustomer}
+        userRole={profile?.role}
+      />
+
+      {/* Authentication Modal (Sign In/Sign Up) */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        defaultMode="login"
+      />
     </div>
+
+    
     <Footer />
     </>
   );
