@@ -127,3 +127,19 @@ export interface Booking {
   totalPrice: number;
   createdAt: string;
 }
+
+// Vehicle interface (matches the vehicles table)
+export interface Vehicle {
+  id: string;
+  driver_id: string;
+  name: string;
+  type: string;
+  seats: number;
+  price_per_day: number;
+  description?: string;
+  features: string[];
+  images: string[];
+  available: boolean;
+  created_at: string;
+  updated_at: string;
+}

@@ -344,4 +344,81 @@ export const deleteHotelRoom = async (roomId: string) => {
     .delete()
     .eq('id', roomId)
   return { data, error }
+}
+
+// Vehicle management functions
+export const createVehicle = async (vehicleData: {
+  driver_id: string
+  name: string
+  type: string
+  seats: number
+  price_per_day: number
+  description?: string
+  features: string[]
+  images: string[]
+  available?: boolean
+}) => {
+  const { data, error } = await supabase
+    .from('vehicles')
+    .insert({
+      ...vehicleData,
+      available: vehicleData.available ?? true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .select()
+    .single()
+  return { data, error }
+}
+
+export const getVehiclesByDriver = async (driverId: string) => {
+  const { data, error } = await supabase
+    .from('vehicles')
+    .select('*')
+    .eq('driver_id', driverId)
+    .order('created_at', { ascending: false })
+  return { data, error }
+}
+
+export const updateVehicle = async (vehicleId: string, updates: {
+  name?: string
+  type?: string
+  seats?: number
+  price_per_day?: number
+  description?: string
+  features?: string[]
+  images?: string[]
+  available?: boolean
+}) => {
+  const { data, error } = await supabase
+    .from('vehicles')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', vehicleId)
+    .select()
+    .single()
+  return { data, error }
+}
+
+export const deleteVehicle = async (vehicleId: string) => {
+  const { data, error } = await supabase
+    .from('vehicles')
+    .delete()
+    .eq('id', vehicleId)
+  return { data, error }
+}
+
+export const toggleVehicleAvailability = async (vehicleId: string, available: boolean) => {
+  const { data, error } = await supabase
+    .from('vehicles')
+    .update({
+      available,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', vehicleId)
+    .select()
+    .single()
+  return { data, error }
 } 
