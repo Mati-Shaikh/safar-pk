@@ -223,4 +223,125 @@ export const createMissingProfile = async (userId: string, userData: {
       updated_at: new Date().toISOString()
     })
   return { data, error }
+}
+
+// Hotel management functions
+export const createHotel = async (hotelData: {
+  owner_id: string
+  name: string
+  description?: string
+  location: string
+  amenities: string[]
+  images: string[]
+}) => {
+  const { data, error } = await supabase
+    .from('hotels')
+    .insert({
+      ...hotelData,
+      rating: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .select()
+    .single()
+  return { data, error }
+}
+
+export const getHotelsByOwner = async (ownerId: string) => {
+  const { data, error } = await supabase
+    .from('hotels')
+    .select('*')
+    .eq('owner_id', ownerId)
+    .order('created_at', { ascending: false })
+  return { data, error }
+}
+
+export const updateHotel = async (hotelId: string, updates: {
+  name?: string
+  description?: string
+  location?: string
+  amenities?: string[]
+  images?: string[]
+  rating?: number
+}) => {
+  const { data, error } = await supabase
+    .from('hotels')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', hotelId)
+    .select()
+    .single()
+  return { data, error }
+}
+
+export const deleteHotel = async (hotelId: string) => {
+  const { data, error } = await supabase
+    .from('hotels')
+    .delete()
+    .eq('id', hotelId)
+  return { data, error }
+}
+
+// Hotel Room management functions
+export const createHotelRoom = async (roomData: {
+  hotel_id: string
+  type: string
+  description?: string
+  price_per_night: number
+  capacity: number
+  amenities: string[]
+  images: string[]
+  available?: boolean
+}) => {
+  const { data, error } = await supabase
+    .from('hotel_rooms')
+    .insert({
+      ...roomData,
+      available: roomData.available ?? true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .select()
+    .single()
+  return { data, error }
+}
+
+export const getHotelRooms = async (hotelId: string) => {
+  const { data, error } = await supabase
+    .from('hotel_rooms')
+    .select('*')
+    .eq('hotel_id', hotelId)
+    .order('created_at', { ascending: false })
+  return { data, error }
+}
+
+export const updateHotelRoom = async (roomId: string, updates: {
+  type?: string
+  description?: string
+  price_per_night?: number
+  capacity?: number
+  amenities?: string[]
+  images?: string[]
+  available?: boolean
+}) => {
+  const { data, error } = await supabase
+    .from('hotel_rooms')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', roomId)
+    .select()
+    .single()
+  return { data, error }
+}
+
+export const deleteHotelRoom = async (roomId: string) => {
+  const { data, error } = await supabase
+    .from('hotel_rooms')
+    .delete()
+    .eq('id', roomId)
+  return { data, error }
 } 

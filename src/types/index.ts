@@ -24,7 +24,37 @@ export interface Driver extends User {
   pricePerDay: number;
 }
 
-export interface Hotel extends User {
+// Database Hotel interface (matches the hotels table)
+export interface Hotel {
+  id: string;
+  owner_id: string;
+  name: string;
+  description?: string;
+  location: string;
+  amenities: string[];
+  images: string[];
+  rating: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Database Hotel Room interface (matches the hotel_rooms table)
+export interface HotelRoom {
+  id: string;
+  hotel_id: string;
+  type: string;
+  description?: string;
+  price_per_night: number;
+  capacity: number;
+  amenities: string[];
+  images: string[];
+  available: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Legacy Hotel interface for backward compatibility
+export interface HotelLegacy extends User {
   role: 'hotel';
   hotelName: string;
   location: string;
