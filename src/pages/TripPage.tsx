@@ -2078,6 +2078,8 @@ export default function TripsPage() {
   const [userTrips, setUserTrips] = useState([]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAuthRequiredModalOpen, setIsAuthRequiredModalOpen] = useState(false);
+  const [pendingTripForm, setPendingTripForm] = useState(null);
+  const [pendingCurrentStep, setPendingCurrentStep] = useState(null);
 
   // Load user trips from Supabase instead of localStorage
   useEffect(() => {
@@ -2117,6 +2119,24 @@ export default function TripsPage() {
     }
   }, [location.state]);
 
+  // Restore trip form data after successful authentication
+  useEffect(() => {
+    if (isAuthenticated && isCustomer && pendingTripForm && pendingCurrentStep) {
+      // Restore the form data and step
+      setTripForm(pendingTripForm);
+      setCurrentStep(pendingCurrentStep);
+      setIsCreateTripOpen(true);
+
+      // Clear pending data
+      setPendingTripForm(null);
+      setPendingCurrentStep(null);
+
+      // Close auth modals
+      setIsAuthRequiredModalOpen(false);
+      setIsAuthModalOpen(false);
+    }
+  }, [isAuthenticated, isCustomer, pendingTripForm, pendingCurrentStep]);
+
   const [tripForm, setTripForm] = useState(() => {
     const prefilledData = location.state?.prefilledData;
     return {
@@ -2148,11 +2168,17 @@ export default function TripsPage() {
 
   const handleCreateTrip = async () => {
     if (!isAuthenticated || !user) {
+      // Store the current form data and step before showing auth modal
+      setPendingTripForm(tripForm);
+      setPendingCurrentStep(currentStep);
       setIsAuthRequiredModalOpen(true);
       return;
     }
 
     if (!isCustomer) {
+      // Store the current form data and step before showing auth modal
+      setPendingTripForm(tripForm);
+      setPendingCurrentStep(currentStep);
       setIsAuthRequiredModalOpen(true);
       return;
     }
@@ -2231,18 +2257,8 @@ export default function TripsPage() {
     }
   };
 
-  // Handle Create Trip button click with authentication checks
+  // Handle Create Trip button click - allow users to fill form regardless of auth status
   const handleCreateTripClick = () => {
-    if (!isAuthenticated) {
-      setIsAuthRequiredModalOpen(true);
-      return;
-    }
-
-    if (!isCustomer) {
-      setIsAuthRequiredModalOpen(true);
-      return;
-    }
-
     setIsCreateTripOpen(true);
   };
 
