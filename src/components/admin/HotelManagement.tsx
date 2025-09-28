@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building, Plus, Edit, Trash2, Search, Bed } from 'lucide-react';
+import { Building, Plus, Edit, Trash2, Search, Bed, Image, X, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -366,6 +366,61 @@ export const HotelManagement: React.FC = () => {
     });
   };
 
+  const addRoomImage = () => {
+    if (imageInput.trim()) {
+      setNewRoom({
+        ...newRoom,
+        images: [...newRoom.images, imageInput.trim()]
+      });
+      setImageInput('');
+    }
+  };
+
+  const removeRoomImage = (index: number) => {
+    setNewRoom({
+      ...newRoom,
+      images: newRoom.images.filter((_, i) => i !== index)
+    });
+  };
+
+  const addEditHotelImage = () => {
+    if (imageInput.trim() && editingHotel) {
+      setEditingHotel({
+        ...editingHotel,
+        images: [...editingHotel.images, imageInput.trim()]
+      });
+      setImageInput('');
+    }
+  };
+
+  const removeEditHotelImage = (index: number) => {
+    if (editingHotel) {
+      setEditingHotel({
+        ...editingHotel,
+        images: editingHotel.images.filter((_, i) => i !== index)
+      });
+    }
+  };
+
+  const addEditRoomImage = () => {
+    if (imageInput.trim() && editingRoom) {
+      setEditingRoom({
+        ...editingRoom,
+        images: [...editingRoom.images, imageInput.trim()]
+      });
+      setImageInput('');
+    }
+  };
+
+  const removeEditRoomImage = (index: number) => {
+    if (editingRoom) {
+      setEditingRoom({
+        ...editingRoom,
+        images: editingRoom.images.filter((_, i) => i !== index)
+      });
+    }
+  };
+
   const filteredHotels = hotels.filter(hotel =>
     (hotel.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     (hotel.location?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -488,7 +543,7 @@ export const HotelManagement: React.FC = () => {
                             value={amenityInput}
                             onChange={(e) => setAmenityInput(e.target.value)}
                             placeholder="Add an amenity"
-                            onKeyPress={(e) => e.key === 'Enter' && addAmenity()}
+                            onKeyDown={(e) => e.key === 'Enter' && addAmenity()}
                           />
                           <Button type="button" onClick={addAmenity}>Add</Button>
                         </div>
@@ -501,22 +556,60 @@ export const HotelManagement: React.FC = () => {
                         </div>
                       </div>
                       <div>
-                        <Label>Images</Label>
+                        <Label>Hotel Images</Label>
                         <div className="flex gap-2 mb-2">
                           <Input
                             value={imageInput}
                             onChange={(e) => setImageInput(e.target.value)}
-                            placeholder="Add image URL"
-                            onKeyPress={(e) => e.key === 'Enter' && addImage()}
+                            placeholder="Add image URL (https://...)"
+                            onKeyDown={(e) => e.key === 'Enter' && addImage()}
                           />
-                          <Button type="button" onClick={addImage}>Add</Button>
+                          <Button type="button" onClick={addImage}>
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add
+                          </Button>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {newHotel.images.map((image, index) => (
-                            <Badge key={index} variant="outline" className="cursor-pointer" onClick={() => removeImage(index)}>
-                              Image {index + 1} ×
-                            </Badge>
-                          ))}
+                        {newHotel.images.length > 0 && (
+                          <div className="grid grid-cols-3 gap-3 mb-3">
+                            {newHotel.images.map((image, index) => (
+                              <div key={index} className="relative group">
+                                <img
+                                  src={image}
+                                  alt={`Hotel image ${index + 1}`}
+                                  className="w-full h-24 object-cover rounded-lg border"
+                                  onError={(e) => {
+                                    e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxMi0zIDMtMy0zIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvcG5nPgo=';
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                  <div className="opacity-0 group-hover:opacity-100 flex gap-2">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="secondary"
+                                      onClick={() => window.open(image, '_blank')}
+                                    >
+                                      <ExternalLink className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => removeImage(index)}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="absolute bottom-1 left-1 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                                  {index + 1}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="text-sm text-gray-500">
+                          {newHotel.images.length} image(s) added
                         </div>
                       </div>
                     </div>
@@ -536,6 +629,7 @@ export const HotelManagement: React.FC = () => {
                     <TableHead>Hotel</TableHead>
                     <TableHead>Owner</TableHead>
                     <TableHead>Location</TableHead>
+                    <TableHead>Images</TableHead>
                     <TableHead>Rating</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
@@ -547,6 +641,32 @@ export const HotelManagement: React.FC = () => {
                       <TableCell className="font-medium">{hotel.name}</TableCell>
                       <TableCell>{hotelOwners.find(owner => owner.id === hotel.owner_id)?.name || 'Unknown'}</TableCell>
                       <TableCell>{hotel.location}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Image className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm">{hotel.images?.length || 0} images</span>
+                          {hotel.images && hotel.images.length > 0 && (
+                            <div className="flex -space-x-2">
+                              {hotel.images.slice(0, 3).map((img, idx) => (
+                                <img
+                                  key={idx}
+                                  src={img}
+                                  alt={`${hotel.name} ${idx + 1}`}
+                                  className="w-8 h-8 rounded-full border-2 border-white object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxMi0zIDMtMy0zIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvcG5nPgo=';
+                                  }}
+                                />
+                              ))}
+                              {hotel.images.length > 3 && (
+                                <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
+                                  +{hotel.images.length - 3}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <span>{hotel.rating}</span>
@@ -681,6 +801,60 @@ export const HotelManagement: React.FC = () => {
                             onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
                           />
                         </div>
+                        <div>
+                          <Label>Room Images</Label>
+                          <div className="flex gap-2 mb-2">
+                            <Input
+                              value={imageInput}
+                              onChange={(e) => setImageInput(e.target.value)}
+                              placeholder="Add image URL (https://...)"
+                              onKeyDown={(e) => e.key === 'Enter' && addRoomImage()}
+                            />
+                            <Button type="button" onClick={addRoomImage}>
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add
+                            </Button>
+                          </div>
+                          {newRoom.images.length > 0 && (
+                            <div className="grid grid-cols-3 gap-3 mb-3">
+                              {newRoom.images.map((image, index) => (
+                                <div key={index} className="relative group">
+                                  <img
+                                    src={image}
+                                    alt={`Room image ${index + 1}`}
+                                    className="w-full h-20 object-cover rounded-lg border"
+                                    onError={(e) => {
+                                      e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxMi0zIDMtMy0zIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvcG5nPgo=';
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                    <div className="opacity-0 group-hover:opacity-100 flex gap-1">
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={() => window.open(image, '_blank')}
+                                      >
+                                        <ExternalLink className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => removeRoomImage(index)}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="text-sm text-gray-500">
+                            {newRoom.images.length} image(s) added
+                          </div>
+                        </div>
                         <div className="flex items-center space-x-2">
                           <input
                             type="checkbox"
@@ -712,6 +886,7 @@ export const HotelManagement: React.FC = () => {
                       <TableHead>Type</TableHead>
                       <TableHead>Capacity</TableHead>
                       <TableHead>Price/Night</TableHead>
+                      <TableHead>Images</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -722,6 +897,32 @@ export const HotelManagement: React.FC = () => {
                         <TableCell className="font-medium">{room.type}</TableCell>
                         <TableCell>{room.capacity}</TableCell>
                         <TableCell>PKR {room.price_per_night}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Image className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm">{room.images?.length || 0} images</span>
+                            {room.images && room.images.length > 0 && (
+                              <div className="flex -space-x-2">
+                                {room.images.slice(0, 2).map((img, idx) => (
+                                  <img
+                                    key={idx}
+                                    src={img}
+                                    alt={`${room.type} ${idx + 1}`}
+                                    className="w-6 h-6 rounded border border-white object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxMi0zIDMtMy0zIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvcG5nPgo=';
+                                    }}
+                                  />
+                                ))}
+                                {room.images.length > 2 && (
+                                  <div className="w-6 h-6 rounded border border-white bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
+                                    +{room.images.length - 2}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Badge variant={room.available ? 'default' : 'secondary'}>
                             {room.available ? 'Available' : 'Unavailable'}
@@ -825,6 +1026,63 @@ export const HotelManagement: React.FC = () => {
                   onChange={(e) => setEditingHotel({ ...editingHotel, rating: parseFloat(e.target.value) || 0 })}
                 />
               </div>
+              <div>
+                <Label>Hotel Images</Label>
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    value={imageInput}
+                    onChange={(e) => setImageInput(e.target.value)}
+                    placeholder="Add image URL (https://...)"
+                    onKeyDown={(e) => e.key === 'Enter' && addEditHotelImage()}
+                  />
+                  <Button type="button" onClick={addEditHotelImage}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+                {editingHotel.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mb-3">
+                    {editingHotel.images.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={image}
+                          alt={`Hotel image ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border"
+                          onError={(e) => {
+                            e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxMi0zIDMtMy0zIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvcG5nPgo=';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 flex gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => window.open(image, '_blank')}
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removeEditHotelImage(index)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="absolute bottom-1 left-1 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                          {index + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="text-sm text-gray-500">
+                  {editingHotel.images.length} image(s) added
+                </div>
+              </div>
             </div>
           )}
           <DialogFooter>
@@ -891,6 +1149,60 @@ export const HotelManagement: React.FC = () => {
                   onChange={(e) => setEditingRoom({ ...editingRoom, available: e.target.checked })}
                 />
                 <Label htmlFor="edit-room-available">Available</Label>
+              </div>
+              <div>
+                <Label>Room Images</Label>
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    value={imageInput}
+                    onChange={(e) => setImageInput(e.target.value)}
+                    placeholder="Add image URL (https://...)"
+                    onKeyDown={(e) => e.key === 'Enter' && addEditRoomImage()}
+                  />
+                  <Button type="button" onClick={addEditRoomImage}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+                {editingRoom.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mb-3">
+                    {editingRoom.images.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={image}
+                          alt={`Room image ${index + 1}`}
+                          className="w-full h-20 object-cover rounded-lg border"
+                          onError={(e) => {
+                            e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxMi0zIDMtMy0zIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvcG5nPgo=';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 flex gap-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => window.open(image, '_blank')}
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removeEditRoomImage(index)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="text-sm text-gray-500">
+                  {editingRoom.images.length} image(s) added
+                </div>
               </div>
             </div>
           )}

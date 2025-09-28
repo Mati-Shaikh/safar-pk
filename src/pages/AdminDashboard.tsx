@@ -11,6 +11,7 @@ import { UserManagement } from '@/components/admin/UserManagement';
 import { VehicleManagement } from '@/components/admin/VehicleManagement';
 import { HotelManagement } from '@/components/admin/HotelManagement';
 import { DestinationManagement } from '@/components/admin/DestinationManagement';
+import { TripManagement } from '@/components/admin/TripManagement';
 import { DebugData } from '@/components/admin/DebugData';
 
 export const AdminDashboard: React.FC = () => {
@@ -25,9 +26,10 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="trips">Trips</TabsTrigger>
           <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
           <TabsTrigger value="hotels">Hotels</TabsTrigger>
           <TabsTrigger value="destinations">Destinations</TabsTrigger>
@@ -42,6 +44,10 @@ export const AdminDashboard: React.FC = () => {
 
         <TabsContent value="users" className="space-y-6">
           <UserManagement />
+        </TabsContent>
+
+        <TabsContent value="trips" className="space-y-6">
+          <TripManagement />
         </TabsContent>
 
         <TabsContent value="vehicles" className="space-y-6">

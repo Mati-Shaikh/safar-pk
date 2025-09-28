@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -130,6 +131,7 @@ const pakistanTrips = [
 const TRIP_CATEGORIES = ["All", "Adventure", "Cultural", "Desert", "Nature", "Trekking"];
 
 const Destinations = () => {
+  const navigate = useNavigate();
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -143,6 +145,25 @@ const Destinations = () => {
       return matchesSearch && matchesCategory;
     });
   }, [searchTerm, selectedCategory]);
+
+  const handleBookNow = (trip) => {
+    // Navigate to TripPage with pre-filled destination data
+    navigate('/trip', {
+      state: {
+        prefilledData: {
+          name: trip.name,
+          destinations: trip.destinations,
+          duration: trip.duration,
+          description: trip.description,
+          highlights: trip.highlights,
+          difficulty: trip.difficulty,
+          groupSize: trip.groupSize,
+          price: trip.price,
+          category: trip.category
+        }
+      }
+    });
+  };
 
   return (
     <>
@@ -336,13 +357,13 @@ const Destinations = () => {
         <span className="text-gray-500 ml-1 text-sm">per person</span>
       </div>
       <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-        <Button variant="outline" className="w-full sm:w-auto border-gray-300 text-sm">
+        <Button
+          variant="outline"
+          className="w-full sm:w-auto border-gray-300 text-sm"
+          onClick={() => handleBookNow(trip)}
+        >
           <Plane className="mr-2 h-4 w-4" />
           Book Now
-        </Button>
-        <Button className="w-full sm:w-auto bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800 text-sm">
-          <Mountain className="mr-2 h-4 w-4" />
-          Explore More
         </Button>
       </div>
     </DialogFooter>

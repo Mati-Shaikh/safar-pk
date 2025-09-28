@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1123,8 +1124,74 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
     updateItinerary(dayIndex, day.slots.filter(s => s.id !== slotId));
   };
 
+  // Helper function to check if hotel selection is allowed for this slot
+  const canSelectHotel = (slotId) => {
+    const hasOtherHotelSelected = day.slots.some(s =>
+      s.id !== slotId && s.hotelRoomNeeded
+    );
+    return !hasOtherHotelSelected;
+  };
+
+  // Get the slot that already has hotel selected (if any)
+  const getSelectedHotelSlot = () => {
+    return day.slots.find(s => s.hotelRoomNeeded);
+  };
+
   const updateSlot = (slotId, field, value) => {
-    const newSlots = day.slots.map(s => 
+    // Validation for hotel room selection - only one hotel per day
+    if (field === 'hotelRoomNeeded' && value === true) {
+      const hasOtherHotelSelected = day.slots.some(s =>
+        s.id !== slotId && s.hotelRoomNeeded
+      );
+
+      if (hasOtherHotelSelected) {
+        const selectedHotelSlot = getSelectedHotelSlot();
+        const confirm = window.confirm(
+          `Only one hotel can be selected per day.\n\nCurrently "${selectedHotelSlot?.activity}" activity has "${selectedHotelSlot?.hotelDetails}" hotel selected.\n\nDo you want to move the hotel selection to this activity instead?`
+        );
+
+        if (confirm) {
+          // Clear the previous hotel selection and set it for this slot
+          const newSlots = day.slots.map(s => {
+            if (s.id === slotId) {
+              return { ...s, hotelRoomNeeded: true };
+            } else if (s.hotelRoomNeeded) {
+              return {
+                ...s,
+                hotelRoomNeeded: false,
+                hotelDetails: '',
+                selectedRoom: null
+              };
+            }
+            return s;
+          });
+          updateItinerary(dayIndex, newSlots);
+        }
+        return;
+      }
+    }
+
+    // If selecting a hotel, clear other hotel selections for the day
+    if (field === 'hotelDetails' && value) {
+      const newSlots = day.slots.map(s => {
+        if (s.id === slotId) {
+          return { ...s, [field]: value };
+        } else if (s.hotelRoomNeeded) {
+          // Clear other hotel selections for this day
+          return {
+            ...s,
+            hotelRoomNeeded: false,
+            hotelDetails: '',
+            selectedRoom: null
+          };
+        }
+        return s;
+      });
+      updateItinerary(dayIndex, newSlots);
+      return;
+    }
+
+    const newSlots = day.slots.map(s =>
       s.id === slotId ? { ...s, [field]: value } : s
     );
     updateItinerary(dayIndex, newSlots);
@@ -1297,14 +1364,27 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
                   )}
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`hotel-${slot.id}`} 
-                    checked={slot.hotelRoomNeeded} 
-                    onCheckedChange={checked => updateSlot(slot.id, 'hotelRoomNeeded', !!checked)} 
+                  <Checkbox
+                    id={`hotel-${slot.id}`}
+                    checked={slot.hotelRoomNeeded}
+                    disabled={!canSelectHotel(slot.id) && !slot.hotelRoomNeeded}
+                    onCheckedChange={checked => updateSlot(slot.id, 'hotelRoomNeeded', !!checked)}
                   />
-                  <Label htmlFor={`hotel-${slot.id}`} className="text-gray-700">
+                  <Label
+                    htmlFor={`hotel-${slot.id}`}
+                    className={`${
+                      !canSelectHotel(slot.id) && !slot.hotelRoomNeeded
+                        ? 'text-gray-400'
+                        : 'text-gray-700'
+                    }`}
+                  >
                     Hotel Room
                   </Label>
+                  {!canSelectHotel(slot.id) && !slot.hotelRoomNeeded && (
+                    <span className="text-xs text-orange-600 ml-2">
+                      (Only one hotel per day allowed)
+                    </span>
+                  )}
                 </div>
               </div>
               {slot.hotelRoomNeeded && (
@@ -1456,7 +1536,7 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
 };
 
 
-const TripDetailsStep = ({ tripForm, setTripForm, handleNextStep }) => (
+const TripDetailsStep = ({ tripForm, setTripForm, handleNextStep, prefilledData }) => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -1518,14 +1598,66 @@ const TripDetailsStep = ({ tripForm, setTripForm, handleNextStep }) => (
 
       <div className="space-y-2">
         <Label htmlFor="preferences" className="text-gray-800">Travel Preferences</Label>
-        <Textarea 
-          id="preferences" 
-          placeholder="Tell us about your interests, preferred activities, dietary requirements, etc." 
-          value={tripForm.preferences} 
+        <Textarea
+          id="preferences"
+          placeholder="Tell us about your interests, preferred activities, dietary requirements, etc."
+          value={tripForm.preferences}
           onChange={(e) => setTripForm(prev => ({ ...prev, preferences: e.target.value }))}
           className="border-gray-300 focus:border-gray-600 min-h-[100px]"
         />
       </div>
+
+      {/* Display prefilled destination information */}
+      {prefilledData && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-blue-600" />
+            <h3 className="font-semibold text-blue-800">Selected Destination Package</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium text-gray-800 mb-2">Destinations</h4>
+              <div className="flex flex-wrap gap-1">
+                {prefilledData.destinations?.map((dest, index) => (
+                  <Badge key={index} variant="outline" className="text-xs border-blue-300 text-blue-700">
+                    <MapPin className="h-3 w-3 mr-1" />
+                    {dest}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-medium text-gray-800 mb-2">Trip Highlights</h4>
+              <div className="space-y-1">
+                {prefilledData.highlights?.slice(0, 3).map((highlight, index) => (
+                  <div key={index} className="flex items-center text-sm text-gray-600">
+                    <Camera className="h-3 w-3 mr-2 text-blue-600" />
+                    {highlight}
+                  </div>
+                ))}
+                {prefilledData.highlights?.length > 3 && (
+                  <div className="text-xs text-blue-600">+{prefilledData.highlights.length - 3} more highlights</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-blue-200">
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <span><strong>Duration:</strong> {prefilledData.duration}</span>
+              <span><strong>Difficulty:</strong> {prefilledData.difficulty}</span>
+              <span><strong>Category:</strong> {prefilledData.category}</span>
+            </div>
+            <Badge className="bg-blue-100 text-blue-800">{prefilledData.price}</Badge>
+          </div>
+
+          <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded">
+            💡 This information has been pre-filled from your selected destination. You can now customize the dates and add your detailed itinerary!
+          </div>
+        </div>
+      )}
 
       {/* <div className="flex items-center space-x-2">
         <Checkbox 
@@ -1787,14 +1919,30 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
             {tripForm.itinerary.map((day, dayIndex) => (
               <div key={day.date} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                  <h5 className="font-semibold text-gray-800 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Day {dayIndex + 1} - {new Date(day.date).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </h5>
+                  <div className="flex items-center justify-between">
+                    <h5 className="font-semibold text-gray-800 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Day {dayIndex + 1} - {new Date(day.date).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </h5>
+                    {(() => {
+                      const selectedHotelSlot = day.slots.find(s => s.hotelRoomNeeded);
+                      return selectedHotelSlot && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Star className="h-4 w-4 text-blue-600" />
+                          <span className="text-blue-700 font-medium">
+                            Hotel: {selectedHotelSlot.hotelDetails}
+                            <span className="text-gray-600 ml-1">
+                              ({selectedHotelSlot.activity})
+                            </span>
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
                 <div className="p-4">
                   {day.slots.length === 0 ? (
@@ -1921,6 +2069,7 @@ const ReviewStep = ({ tripForm, handleCreateTrip, setCurrentStep }) => {
 
 export default function TripsPage() {
   const { user, profile, isAuthenticated, isCustomer, loading } = useAuth();
+  const location = useLocation();
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [isCreateTripOpen, setIsCreateTripOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1958,17 +2107,29 @@ export default function TripsPage() {
       loadUserTrips();
     }
   }, [isAuthenticated, user, loading]);
-  
-  const [tripForm, setTripForm] = useState({
-    name: '',
-    numberOfPeople: 1,
-    startDate: '',
-    endDate: '',
-    needsCar: false,
-    carType: 'Sedan',
-    budget: '',
-    preferences: '',
-    itinerary: [] as ItineraryDay[],
+
+  // Handle prefilled data from Destinations page
+  useEffect(() => {
+    const prefilledData = location.state?.prefilledData;
+    if (prefilledData) {
+      setIsCreateTripOpen(true);
+      setCurrentStep(1);
+    }
+  }, [location.state]);
+
+  const [tripForm, setTripForm] = useState(() => {
+    const prefilledData = location.state?.prefilledData;
+    return {
+      name: prefilledData?.name || '',
+      numberOfPeople: 1,
+      startDate: '',
+      endDate: '',
+      needsCar: false,
+      carType: 'Sedan',
+      budget: '',
+      preferences: prefilledData?.description || '',
+      itinerary: [] as ItineraryDay[],
+    };
   });
 
   const allTrips = useMemo(() => {
@@ -2166,10 +2327,11 @@ export default function TripsPage() {
   const renderCreateTripStep = () => {
     switch (currentStep) {
       case 1:
-        return <TripDetailsStep 
-          tripForm={tripForm} 
-          setTripForm={setTripForm} 
-          handleNextStep={handleNextStep} 
+        return <TripDetailsStep
+          tripForm={tripForm}
+          setTripForm={setTripForm}
+          handleNextStep={handleNextStep}
+          prefilledData={location.state?.prefilledData}
         />;
       case 2:
         return <ItineraryBuilderStep 
@@ -2189,6 +2351,7 @@ export default function TripsPage() {
           tripForm={tripForm}
           setTripForm={setTripForm}
           handleNextStep={handleNextStep}
+          prefilledData={location.state?.prefilledData}
         />;
     }
   };

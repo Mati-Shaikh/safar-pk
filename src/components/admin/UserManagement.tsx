@@ -16,9 +16,9 @@ interface User {
   id: string;
   email: string;
   full_name: string;
-  role: 'customer' | 'driver' | 'hotel' | 'admin';
-  phone?: string;
-  address?: string;
+  phone_number?: string;
+  role: 'customer' | 'admin' | 'driver' | 'hotel_owner';
+  avatar_url?: string;
   created_at: string;
 }
 
@@ -33,8 +33,7 @@ export const UserManagement: React.FC = () => {
     email: '',
     full_name: '',
     role: 'customer' as const,
-    phone: '',
-    address: ''
+    phone_number: ''
   });
   const { toast } = useToast();
 
@@ -82,7 +81,7 @@ export const UserManagement: React.FC = () => {
         description: "User added successfully",
       });
       
-      setNewUser({ email: '', full_name: '', role: 'customer', phone: '', address: '' });
+      setNewUser({ email: '', full_name: '', role: 'customer', phone_number: '' });
       setIsAddDialogOpen(false);
       fetchUsers();
     } catch (error) {
@@ -159,7 +158,7 @@ export const UserManagement: React.FC = () => {
     switch (role) {
       case 'admin': return 'default';
       case 'driver': return 'secondary';
-      case 'hotel': return 'outline';
+      case 'hotel_owner': return 'outline';
       case 'customer': return 'secondary';
       default: return 'secondary';
     }
@@ -169,7 +168,7 @@ export const UserManagement: React.FC = () => {
     switch (role) {
       case 'admin': return 'Admin';
       case 'driver': return 'Driver';
-      case 'hotel': return 'Hotel Owner';
+      case 'hotel_owner': return 'Hotel Owner';
       case 'customer': return 'Customer';
       default: return role;
     }
@@ -233,7 +232,7 @@ export const UserManagement: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name">Full Name</Label>
                     <Input
                       id="name"
                       value={newUser.full_name}
@@ -249,25 +248,17 @@ export const UserManagement: React.FC = () => {
                       <SelectContent>
                         <SelectItem value="customer">Customer</SelectItem>
                         <SelectItem value="driver">Driver</SelectItem>
-                        <SelectItem value="hotel">Hotel Owner</SelectItem>
+                        <SelectItem value="hotel_owner">Hotel Owner</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone">Phone Number</Label>
                     <Input
                       id="phone"
-                      value={newUser.phone}
-                      onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      value={newUser.address}
-                      onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
+                      value={newUser.phone_number}
+                      onChange={(e) => setNewUser({ ...newUser, phone_number: e.target.value })}
                     />
                   </div>
                 </div>
@@ -302,7 +293,7 @@ export const UserManagement: React.FC = () => {
                       {getRoleDisplayName(user.role)}
                     </Badge>
                   </TableCell>
-                  <TableCell>{user.phone || '-'}</TableCell>
+                  <TableCell>{user.phone_number || '-'}</TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
@@ -367,7 +358,7 @@ export const UserManagement: React.FC = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="edit-name">Name</Label>
+                <Label htmlFor="edit-name">Full Name</Label>
                 <Input
                   id="edit-name"
                   value={editingUser.full_name}
@@ -389,19 +380,11 @@ export const UserManagement: React.FC = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="edit-phone">Phone</Label>
+                <Label htmlFor="edit-phone">Phone Number</Label>
                 <Input
                   id="edit-phone"
-                  value={editingUser.phone || ''}
-                  onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-address">Address</Label>
-                <Input
-                  id="edit-address"
-                  value={editingUser.address || ''}
-                  onChange={(e) => setEditingUser({ ...editingUser, address: e.target.value })}
+                  value={editingUser.phone_number || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, phone_number: e.target.value })}
                 />
               </div>
             </div>

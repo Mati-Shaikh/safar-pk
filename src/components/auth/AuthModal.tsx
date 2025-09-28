@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,11 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
+
+  // Update mode when defaultMode prop changes
+  useEffect(() => {
+    setMode(defaultMode);
+  }, [defaultMode]);
 
   const handleSuccess = () => {
     onClose();

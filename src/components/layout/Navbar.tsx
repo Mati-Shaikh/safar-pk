@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { MapPin, LogOut, User, Menu, X } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserRole } from '@/lib/supabase';
 import AuthModal from '@/components/auth/AuthModal';
 
 export const Navbar: React.FC = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
@@ -21,6 +22,19 @@ export const Navbar: React.FC = () => {
       case UserRole.ADMIN: return 'Admin';
       default: return role;
     }
+  };
+
+  const getNavLinkClass = (path: string, isMobile = false) => {
+    const isActive = location.pathname === path;
+    const baseClass = isMobile
+      ? "block px-3 py-2 transition-all duration-200"
+      : "transition-all duration-200 px-3 py-2 rounded-md border-2";
+
+    if (isActive) {
+      return `${baseClass} text-primary border-primary bg-primary/5 font-medium`;
+    }
+
+    return `${baseClass} text-gray-700 hover:text-primary hover:border-primary/50 hover:bg-primary/5 border-transparent`;
   };
 
   const openAuthModal = (mode: 'login' | 'signup') => {
@@ -49,23 +63,23 @@ export const Navbar: React.FC = () => {
           </div>
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-primary transition-colors">
+          <div className="hidden md:flex items-center space-x-4">
+            <Link to="/" className={getNavLinkClass("/")}>
               Home
             </Link>
-            <Link to="/destinations" className="text-gray-700 hover:text-primary transition-colors">
+            <Link to="/destinations" className={getNavLinkClass("/destinations")}>
               Destinations
             </Link>
-            <Link to="/trip" className="text-gray-700 hover:text-primary transition-colors">
+            <Link to="/trip" className={getNavLinkClass("/trip")}>
               My Trips
             </Link>
             {/* Show Dashboard link only for Driver, Admin, and Hotel Owner */}
             {user && profile && profile.role !== UserRole.CUSTOMER && (
-              <Link to="/dashboard" className="text-gray-700 hover:text-primary transition-colors">
+              <Link to="/dashboard" className={getNavLinkClass("/dashboard")}>
                 Dashboard
               </Link>
             )}
-            {/* <Link to="/map" className="text-gray-700 hover:text-primary transition-colors">
+            {/* <Link to="/map" className={getNavLinkClass("/map")}>
               Map
             </Link> */}
           </div>
@@ -122,23 +136,23 @@ export const Navbar: React.FC = () => {
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
               {/* Main Navigation Links - Always visible */}
-              <Link 
-                to="/" 
-                className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+              <Link
+                to="/"
+                className={getNavLinkClass("/", true)}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
-              <Link 
-                to="/destinations" 
-                className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+              <Link
+                to="/destinations"
+                className={getNavLinkClass("/destinations", true)}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Destinations
               </Link>
-              <Link 
-                to="/trip" 
-                className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+              <Link
+                to="/trip"
+                className={getNavLinkClass("/trip", true)}
                 onClick={() => setIsMenuOpen(false)}
               >
                 My Trips
@@ -147,7 +161,7 @@ export const Navbar: React.FC = () => {
               {user && profile && profile.role !== UserRole.CUSTOMER && (
                 <Link
                   to="/dashboard"
-                  className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                  className={getNavLinkClass("/dashboard", true)}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Dashboard
