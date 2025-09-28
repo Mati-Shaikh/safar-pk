@@ -2119,23 +2119,99 @@ export default function TripsPage() {
     }
   }, [location.state]);
 
-  // Restore trip form data after successful authentication
+  // Restore trip form data after successful authentication and auto-create trip
   useEffect(() => {
     if (isAuthenticated && isCustomer && pendingTripForm && pendingCurrentStep) {
       // Restore the form data and step
       setTripForm(pendingTripForm);
       setCurrentStep(pendingCurrentStep);
-      setIsCreateTripOpen(true);
-
-      // Clear pending data
-      setPendingTripForm(null);
-      setPendingCurrentStep(null);
 
       // Close auth modals
       setIsAuthRequiredModalOpen(false);
       setIsAuthModalOpen(false);
+
+      // Auto-create the trip immediately after authentication
+      const autoCreateTrip = async () => {
+        try {
+          // Extract destinations from itinerary
+          const destinations = [...new Set(
+            pendingTripForm.itinerary.flatMap(day =>
+              day.slots?.map(slot => slot.location).filter(Boolean) || []
+            )
+          )];
+
+          // Extract highlights from activities
+          const highlights = [...new Set(
+            pendingTripForm.itinerary.flatMap(day =>
+              day.slots?.map(slot => slot.activity).filter(Boolean) || []
+            )
+          )];
+
+          // Create comprehensive trip data
+          const tripData = {
+            user_id: user.id,
+            name: pendingTripForm.name,
+            start_date: pendingTripForm.startDate,
+            end_date: pendingTripForm.endDate,
+            number_of_people: pendingTripForm.numberOfPeople,
+            budget: pendingTripForm.budget || null,
+            preferences: pendingTripForm.preferences || null,
+            destinations: destinations,
+            highlights: highlights,
+            itinerary: pendingTripForm.itinerary,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          const { data, error } = await supabase
+            .from('trips')
+            .insert([tripData])
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Error creating trip:', error);
+            alert('Failed to create trip. Please try again.');
+            return;
+          }
+
+          console.log('Trip created successfully:', data);
+
+          // Add the new trip to local state
+          setUserTrips(prev => [data, ...prev]);
+
+          // Reset form and close dialog
+          setIsCreateTripOpen(false);
+          setCurrentStep(1);
+          setTripForm({
+            name: '',
+            numberOfPeople: 1,
+            startDate: '',
+            endDate: '',
+            needsCar: false,
+            carType: 'Sedan',
+            budget: '',
+            preferences: '',
+            itinerary: [],
+          });
+
+          // Show success message
+          alert('Trip created successfully! Welcome to Safar Pakistan!');
+
+        } catch (error) {
+          console.error('Error creating trip:', error);
+          alert('Failed to create trip. Please try again.');
+        }
+      };
+
+      // Execute auto-creation
+      autoCreateTrip();
+
+      // Clear pending data
+      setPendingTripForm(null);
+      setPendingCurrentStep(null);
     }
-  }, [isAuthenticated, isCustomer, pendingTripForm, pendingCurrentStep]);
+  }, [isAuthenticated, isCustomer, pendingTripForm, pendingCurrentStep, user]);
 
   const [tripForm, setTripForm] = useState(() => {
     const prefilledData = location.state?.prefilledData;
