@@ -30,9 +30,13 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
   const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.name === 'email'
+      ? e.target.value.toLowerCase()
+      : e.target.value;
+
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: value
     }));
   };
 
@@ -48,7 +52,13 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
     setLoading(true);
     setError('');
 
-    // Validation
+    // Validation - at least one of email or phone is required
+    if (!formData.email && !formData.phone_number) {
+      setError('Please provide either an email address or phone number');
+      setLoading(false);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -94,7 +104,7 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
           <UserPlus className="h-6 w-6" />
-          Create Account
+          Create Accounts
         </CardTitle>
         <CardDescription>
           Join SAFARPk to start your journey through Pakistan
@@ -109,7 +119,9 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="full_name">Full Name</Label>
+            <Label htmlFor="full_name">
+              Full Name <span className="text-red-500">*</span>
+            </Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -126,7 +138,10 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email">
+              Email Address {!formData.phone_number && <span className="text-red-500">*</span>}
+              {formData.phone_number && <span className="text-gray-400 text-sm">(Optional)</span>}
+            </Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -136,14 +151,17 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
                 placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleChange}
-                required
+                required={!formData.phone_number}
                 className="pl-10"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone_number">Phone Number (Optional)</Label>
+            <Label htmlFor="phone_number">
+              Phone Number {!formData.email && <span className="text-red-500">*</span>}
+              {formData.email && <span className="text-gray-400 text-sm">(Optional)</span>}
+            </Label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -153,13 +171,17 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
                 placeholder="Enter your phone number"
                 value={formData.phone_number}
                 onChange={handleChange}
+                required={!formData.email}
                 className="pl-10"
               />
             </div>
+            <p className="text-xs text-gray-500">At least one contact method (email or phone) is required</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Account Type</Label>
+            <Label htmlFor="role">
+              Account Type <span className="text-red-500">*</span>
+            </Label>
             <Select value={formData.role} onValueChange={handleRoleChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your account type" />
@@ -174,7 +196,9 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">
+              Password <span className="text-red-500">*</span>
+            </Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -198,7 +222,9 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">
+              Confirm Password <span className="text-red-500">*</span>
+            </Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input

@@ -350,3 +350,4 @@ INSERT INTO destinations (name, region, description, images, attractions, weathe
  ARRAY['https://example.com/karachi1.jpg', 'https://example.com/karachi2.jpg'],
  ARRAY['Clifton Beach', 'Mazar-e-Quaid', 'Frere Hall', 'Port Grand'],
  'Hot and humid', 85);
+

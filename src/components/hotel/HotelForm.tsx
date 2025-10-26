@@ -5,9 +5,33 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, Building } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Building } from 'lucide-react';
 import { Hotel } from '@/types';
 import { ImageUpload } from './ImageUpload';
+
+const AVAILABLE_AMENITIES = [
+  'WiFi',
+  'Swimming Pool',
+  'Gym/Fitness Center',
+  'Restaurant',
+  'Bar/Lounge',
+  'Room Service',
+  'Parking',
+  'Free Parking',
+  'Spa',
+  'Concierge',
+  'Laundry Service',
+  'Business Center',
+  'Conference Rooms',
+  'Airport Shuttle',
+  'Pet Friendly',
+  'Air Conditioning',
+  'Breakfast Included',
+  '24/7 Front Desk',
+  'Elevator',
+  'Non-Smoking Rooms'
+];
 
 interface HotelFormProps {
   hotel?: Hotel;
@@ -36,26 +60,16 @@ export const HotelForm: React.FC<HotelFormProps> = ({
     images: hotel?.images || []
   });
 
-  const [newAmenity, setNewAmenity] = useState('');
-
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const addAmenity = () => {
-    if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        amenities: [...prev.amenities, newAmenity.trim()]
-      }));
-      setNewAmenity('');
-    }
-  };
-
-  const removeAmenity = (amenity: string) => {
+  const toggleAmenity = (amenity: string) => {
     setFormData(prev => ({
       ...prev,
-      amenities: prev.amenities.filter(a => a !== amenity)
+      amenities: prev.amenities.includes(amenity)
+        ? prev.amenities.filter(a => a !== amenity)
+        : [...prev.amenities, amenity]
     }));
   };
 
@@ -117,29 +131,34 @@ export const HotelForm: React.FC<HotelFormProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Amenities</Label>
-            <div className="flex gap-2">
-              <Input
-                value={newAmenity}
-                onChange={(e) => setNewAmenity(e.target.value)}
-                placeholder="Add amenity (e.g., WiFi, Pool, Gym)"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAmenity())}
-              />
-              <Button type="button" onClick={addAmenity} size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.amenities.map((amenity, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {amenity}
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => removeAmenity(amenity)}
+            <Label>Hotel Amenities</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-md max-h-60 overflow-y-auto">
+              {AVAILABLE_AMENITIES.map((amenity) => (
+                <div key={amenity} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={amenity}
+                    checked={formData.amenities.includes(amenity)}
+                    onCheckedChange={() => toggleAmenity(amenity)}
                   />
-                </Badge>
+                  <Label
+                    htmlFor={amenity}
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {amenity}
+                  </Label>
+                </div>
               ))}
             </div>
+            {formData.amenities.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                <p className="text-sm text-muted-foreground w-full">Selected amenities:</p>
+                {formData.amenities.map((amenity, index) => (
+                  <Badge key={index} variant="secondary">
+                    {amenity}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <ImageUpload

@@ -11,10 +11,10 @@ import Destinations from "./pages/Destinations";
 import NotFound from "./pages/NotFound";
 import TripPage from "./pages/TripPage";
 import Map from "./pages/MapManager";
-import { CustomerDashboard } from "./pages/CustomerDashboard";
 import { DriverDashboard } from "./pages/DriverDashboard";
 import { HotelDashboard } from "./pages/HotelDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { ComingSoon } from "./pages/ComingSoon";
 import { UserRole } from "./lib/supabase";
 
 const queryClient = new QueryClient();
@@ -61,7 +61,7 @@ const AppContent = () => {
 
     switch (profile.role) {
       case UserRole.CUSTOMER:
-        return <CustomerDashboard />;
+        return <ComingSoon />;
       case UserRole.DRIVER:
         return <DriverDashboard />;
       case UserRole.HOTEL_OWNER:

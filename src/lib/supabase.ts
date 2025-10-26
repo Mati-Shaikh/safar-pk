@@ -56,20 +56,38 @@ export const customSignUp = async (email: string, password: string, userData: {
   role: UserRole
 }) => {
   try {
-    console.log('Starting custom signup for:', email)
+    console.log('Starting custom signup for:', email || userData.phone_number)
 
-    // Check if user already exists
-    const { data: existingUser } = await supabase
-      .from('user_profiles')
-      .select('email')
-      .eq('email', email)
-      .single()
+    // Check if user already exists by email or phone
+    if (email) {
+      const { data: existingUserByEmail } = await supabase
+        .from('user_profiles')
+        .select('email')
+        .eq('email', email)
+        .single()
 
-    if (existingUser) {
-      console.log('User already exists')
-      return {
-        data: null,
-        error: { message: 'User with this email already exists' }
+      if (existingUserByEmail) {
+        console.log('User with this email already exists')
+        return {
+          data: null,
+          error: { message: 'User with this email already exists' }
+        }
+      }
+    }
+
+    if (userData.phone_number) {
+      const { data: existingUserByPhone } = await supabase
+        .from('user_profiles')
+        .select('phone_number')
+        .eq('phone_number', userData.phone_number)
+        .single()
+
+      if (existingUserByPhone) {
+        console.log('User with this phone number already exists')
+        return {
+          data: null,
+          error: { message: 'User with this phone number already exists' }
+        }
       }
     }
 
@@ -79,9 +97,9 @@ export const customSignUp = async (email: string, password: string, userData: {
       .from('user_profiles')
       .insert({
         id: userId,
-        email: email,
+        email: email || null,
         full_name: userData.full_name,
-        phone_number: userData.phone_number,
+        phone_number: userData.phone_number || null,
         role: userData.role,
         password_hash: btoa(password), // Simple base64 encoding (in production, use proper hashing)
         created_at: new Date().toISOString(),
@@ -100,7 +118,7 @@ export const customSignUp = async (email: string, password: string, userData: {
     // Create a mock user object similar to Supabase auth
     const mockUser = {
       id: userId,
-      email: email,
+      email: email || userData.phone_number,
       user_metadata: userData
     }
 
@@ -118,22 +136,30 @@ export const customSignUp = async (email: string, password: string, userData: {
   }
 }
 
-export const customSignIn = async (email: string, password: string) => {
+export const customSignIn = async (emailOrPhone: string, password: string) => {
   try {
-    console.log('Starting custom signin for:', email)
+    console.log('Starting custom signin for:', emailOrPhone)
 
-    const { data, error } = await supabase
+    // Try to find user by email or phone number
+    let query = supabase
       .from('user_profiles')
       .select('*')
-      .eq('email', email)
       .eq('password_hash', btoa(password))
-      .single()
+
+    // Check if input looks like email (contains @) or phone
+    if (emailOrPhone.includes('@')) {
+      query = query.eq('email', emailOrPhone.toLowerCase())
+    } else {
+      query = query.eq('phone_number', emailOrPhone)
+    }
+
+    const { data, error } = await query.single()
 
     if (error || !data) {
       console.error('Custom signin failed:', error)
       return {
         data: null,
-        error: { message: 'Invalid email or password' }
+        error: { message: 'Invalid email/phone or password' }
       }
     }
 
@@ -142,7 +168,7 @@ export const customSignIn = async (email: string, password: string) => {
     // Create a mock user object
     const mockUser = {
       id: data.id,
-      email: data.email,
+      email: data.email || data.phone_number,
       user_metadata: {
         full_name: data.full_name,
         role: data.role

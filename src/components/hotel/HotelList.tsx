@@ -212,7 +212,7 @@ export const HotelList: React.FC<HotelListProps> = ({
                     <Bed className="h-4 w-4" />
                     Rooms ({rooms[hotel.id]?.length || 0})
                   </h4>
-                  <Dialog>
+                  <Dialog open={creatingRoomForHotel === hotel.id} onOpenChange={(open) => !open && setCreatingRoomForHotel(null)}>
                     <DialogTrigger asChild>
                       <Button size="sm" onClick={() => setCreatingRoomForHotel(hotel.id)}>
                         <Plus className="h-4 w-4 mr-1" />
@@ -246,9 +246,9 @@ export const HotelList: React.FC<HotelListProps> = ({
                               </p>
                             </div>
                             <div className="flex gap-1">
-                              <Dialog>
+                              <Dialog open={editingRoom?.id === room.id} onOpenChange={(open) => !open && setEditingRoom(null)}>
                                 <DialogTrigger asChild>
-                                  <Button variant="ghost" size="sm">
+                                  <Button variant="ghost" size="sm" onClick={() => setEditingRoom(room)}>
                                     <Edit className="h-3 w-3" />
                                   </Button>
                                 </DialogTrigger>

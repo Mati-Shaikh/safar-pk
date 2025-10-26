@@ -181,3 +181,4 @@ LIMIT 10;
 - **Backup Management**: Database backup and restore functionality
 
 This admin panel provides a complete solution for managing the SAFARPk platform with full CRUD operations, real-time statistics, and comprehensive user management capabilities.
+

@@ -70,11 +70,14 @@ export const Navbar: React.FC = () => {
             <Link to="/destinations" className={getNavLinkClass("/destinations")}>
               Destinations
             </Link>
-            <Link to="/trip" className={getNavLinkClass("/trip")}>
-              My Trips
-            </Link>
-            {/* Show Dashboard link only for Driver, Admin, and Hotel Owner */}
-            {user && profile && profile.role !== UserRole.CUSTOMER && (
+            {/* Hide My Trips for customers - they see Coming Soon page instead */}
+            {(!user || !profile || profile.role !== UserRole.CUSTOMER) && (
+              <Link to="/trip" className={getNavLinkClass("/trip")}>
+                My Trips
+              </Link>
+            )}
+            {/* Show Dashboard link for all logged in users */}
+            {user && profile && (
               <Link to="/dashboard" className={getNavLinkClass("/dashboard")}>
                 Dashboard
               </Link>
@@ -150,15 +153,18 @@ export const Navbar: React.FC = () => {
               >
                 Destinations
               </Link>
-              <Link
-                to="/trip"
-                className={getNavLinkClass("/trip", true)}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                My Trips
-              </Link>
-              {/* Show Dashboard link only for Driver, Admin, and Hotel Owner */}
-              {user && profile && profile.role !== UserRole.CUSTOMER && (
+              {/* Hide My Trips for customers - they see Coming Soon page instead */}
+              {(!user || !profile || profile.role !== UserRole.CUSTOMER) && (
+                <Link
+                  to="/trip"
+                  className={getNavLinkClass("/trip", true)}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Trips
+                </Link>
+              )}
+              {/* Show Dashboard link for all logged in users */}
+              {user && profile && (
                 <Link
                   to="/dashboard"
                   className={getNavLinkClass("/dashboard", true)}
@@ -167,8 +173,8 @@ export const Navbar: React.FC = () => {
                   Dashboard
                 </Link>
               )}
-              {/* <Link 
-                to="/map" 
+              {/* <Link
+                to="/map"
                 className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >

@@ -507,3 +507,4 @@ export const DestinationManagement: React.FC = () => {
     </div>
   );
 };
+

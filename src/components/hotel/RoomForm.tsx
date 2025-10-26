@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { X, Plus, Bed } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Bed } from 'lucide-react';
 import { HotelRoom } from '@/types';
 import { ImageUpload } from './ImageUpload';
 
@@ -16,7 +17,7 @@ interface RoomFormProps {
   onSubmit: (roomData: {
     type: string;
     description: string;
-    price_per_night: number;
+    price_per_night: string;
     capacity: number;
     amenities: string[];
     images: string[];
@@ -26,9 +27,30 @@ interface RoomFormProps {
   isLoading?: boolean;
 }
 
+const AVAILABLE_AMENITIES = [
+  'Air Conditioning',
+  'WiFi',
+  'TV',
+  'Mini Bar',
+  'Room Service',
+  'Balcony',
+  'Sea View',
+  'City View',
+  'Private Bathroom',
+  'Shower',
+  'Bathtub',
+  'Hair Dryer',
+  'Safe',
+  'Coffee Maker',
+  'Refrigerator',
+  'Iron',
+  'Work Desk',
+  'Telephone',
+  'Wardrobe'
+];
+
 export const RoomForm: React.FC<RoomFormProps> = ({
   room,
-  hotelId,
   onSubmit,
   onCancel,
   isLoading = false
@@ -36,33 +58,23 @@ export const RoomForm: React.FC<RoomFormProps> = ({
   const [formData, setFormData] = useState({
     type: room?.type || '',
     description: room?.description || '',
-    price_per_night: room?.price_per_night || 0,
+    price_per_night: room?.price_per_night?.toString() || '',
     capacity: room?.capacity || 1,
     amenities: room?.amenities || [],
     images: room?.images || [],
     available: room?.available ?? true
   });
 
-  const [newAmenity, setNewAmenity] = useState('');
-
   const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const addAmenity = () => {
-    if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        amenities: [...prev.amenities, newAmenity.trim()]
-      }));
-      setNewAmenity('');
-    }
-  };
-
-  const removeAmenity = (amenity: string) => {
+  const toggleAmenity = (amenity: string) => {
     setFormData(prev => ({
       ...prev,
-      amenities: prev.amenities.filter(a => a !== amenity)
+      amenities: prev.amenities.includes(amenity)
+        ? prev.amenities.filter(a => a !== amenity)
+        : [...prev.amenities, amenity]
     }));
   };
 
@@ -72,7 +84,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.type.trim() && formData.price_per_night > 0 && formData.capacity > 0) {
+    if (formData.type.trim() && formData.price_per_night.trim() && formData.capacity > 0) {
       onSubmit(formData);
     }
   };
@@ -120,12 +132,10 @@ export const RoomForm: React.FC<RoomFormProps> = ({
             <Label htmlFor="price_per_night">Price per Night *</Label>
             <Input
               id="price_per_night"
-              type="number"
-              min="0"
-              step="0.01"
+              type="text"
               value={formData.price_per_night}
-              onChange={(e) => handleInputChange('price_per_night', parseFloat(e.target.value) || 0)}
-              placeholder="0.00"
+              onChange={(e) => handleInputChange('price_per_night', e.target.value)}
+              placeholder="e.g., 5000 PKR or $50"
               required
             />
           </div>
@@ -143,28 +153,33 @@ export const RoomForm: React.FC<RoomFormProps> = ({
 
           <div className="space-y-2">
             <Label>Room Amenities</Label>
-            <div className="flex gap-2">
-              <Input
-                value={newAmenity}
-                onChange={(e) => setNewAmenity(e.target.value)}
-                placeholder="Add amenity (e.g., Air Conditioning, TV, Mini Bar)"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAmenity())}
-              />
-              <Button type="button" onClick={addAmenity} size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.amenities.map((amenity, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {amenity}
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => removeAmenity(amenity)}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-md max-h-60 overflow-y-auto">
+              {AVAILABLE_AMENITIES.map((amenity) => (
+                <div key={amenity} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={amenity}
+                    checked={formData.amenities.includes(amenity)}
+                    onCheckedChange={() => toggleAmenity(amenity)}
                   />
-                </Badge>
+                  <Label
+                    htmlFor={amenity}
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {amenity}
+                  </Label>
+                </div>
               ))}
             </div>
+            {formData.amenities.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                <p className="text-sm text-muted-foreground w-full">Selected amenities:</p>
+                {formData.amenities.map((amenity, index) => (
+                  <Badge key={index} variant="secondary">
+                    {amenity}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <ImageUpload
@@ -184,7 +199,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({
           </div>
 
           <div className="flex gap-2 pt-4">
-            <Button type="submit" disabled={isLoading || !formData.type.trim() || formData.price_per_night <= 0 || formData.capacity <= 0}>
+            <Button type="submit" disabled={isLoading || !formData.type.trim() || !formData.price_per_night.trim() || formData.capacity <= 0}>
               {isLoading ? 'Saving...' : (room ? 'Update Room' : 'Create Room')}
             </Button>
             <Button type="button" variant="outline" onClick={onCancel}>

@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Car, Plus, Edit, Trash2, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from '@/components/hotel/ImageUpload';
 
 interface Vehicle {
   id: string;
@@ -53,7 +54,6 @@ export const VehicleManagement: React.FC = () => {
     available: true
   });
   const [featureInput, setFeatureInput] = useState('');
-  const [imageInput, setImageInput] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -212,20 +212,10 @@ export const VehicleManagement: React.FC = () => {
     });
   };
 
-  const addImage = () => {
-    if (imageInput.trim()) {
-      setNewVehicle({
-        ...newVehicle,
-        images: [...newVehicle.images, imageInput.trim()]
-      });
-      setImageInput('');
-    }
-  };
-
-  const removeImage = (index: number) => {
+  const handleImagesChange = (images: string[]) => {
     setNewVehicle({
       ...newVehicle,
-      images: newVehicle.images.filter((_, i) => i !== index)
+      images: images
     });
   };
 
@@ -365,25 +355,12 @@ export const VehicleManagement: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                  <div>
-                    <Label>Images</Label>
-                    <div className="flex gap-2 mb-2">
-                      <Input
-                        value={imageInput}
-                        onChange={(e) => setImageInput(e.target.value)}
-                        placeholder="Add image URL"
-                        onKeyPress={(e) => e.key === 'Enter' && addImage()}
-                      />
-                      <Button type="button" onClick={addImage}>Add</Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {newVehicle.images.map((image, index) => (
-                        <Badge key={index} variant="outline" className="cursor-pointer" onClick={() => removeImage(index)}>
-                          Image {index + 1} ×
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                  <ImageUpload
+                    images={newVehicle.images}
+                    onImagesChange={handleImagesChange}
+                    maxImages={8}
+                    label="Vehicle Images"
+                  />
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -528,6 +505,12 @@ export const VehicleManagement: React.FC = () => {
                 />
                 <Label htmlFor="edit-available">Available</Label>
               </div>
+              <ImageUpload
+                images={editingVehicle.images}
+                onImagesChange={(images) => setEditingVehicle({ ...editingVehicle, images })}
+                maxImages={8}
+                label="Vehicle Images"
+              />
             </div>
           )}
           <DialogFooter>

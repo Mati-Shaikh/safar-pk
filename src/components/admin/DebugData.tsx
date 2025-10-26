@@ -80,3 +80,4 @@ export const DebugData: React.FC = () => {
     </Card>
   );
 };
+

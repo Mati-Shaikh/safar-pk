@@ -184,7 +184,7 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Car className="h-5 w-5" />
-            {vehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
+            {vehicle ? 'Edit Vehicle' : 'Add New Vehicles'}
           </DialogTitle>
           <DialogDescription>
             {vehicle ? 'Update your vehicle information' : 'Add a new vehicle to your fleet'}

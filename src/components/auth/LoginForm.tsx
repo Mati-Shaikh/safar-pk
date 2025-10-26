@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, LogIn, UserCircle } from 'lucide-react';
 import { signIn } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -16,7 +16,7 @@ interface LoginFormProps {
 export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProps) {
   const { refreshAuth } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
+    emailOrPhone: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +36,7 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
     setError('');
 
     try {
-      const { data, error: authError } = await signIn(formData.email, formData.password);
+      const { data, error: authError } = await signIn(formData.emailOrPhone, formData.password);
 
       if (authError) {
         setError(authError.message);
@@ -75,20 +75,21 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="emailOrPhone">Email Address or Phone Number</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <UserCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Enter your email"
-                value={formData.email}
+                id="emailOrPhone"
+                name="emailOrPhone"
+                type="text"
+                placeholder="Enter your email or phone number"
+                value={formData.emailOrPhone}
                 onChange={handleChange}
                 required
                 className="pl-10"
               />
             </div>
+            <p className="text-xs text-gray-500">You can sign in with either your email or phone number</p>
           </div>
 
           <div className="space-y-2">

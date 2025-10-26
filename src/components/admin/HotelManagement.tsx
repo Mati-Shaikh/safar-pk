@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building, Plus, Edit, Trash2, Search, Bed, Image, X, ExternalLink } from 'lucide-react';
+import { Building, Plus, Edit, Trash2, Search, Bed, Image, X, ExternalLink, Car } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from '@/components/hotel/ImageUpload';
 
 interface Hotel {
   id: string;
@@ -46,19 +47,40 @@ interface User {
   email: string;
 }
 
+interface Vehicle {
+  id: string;
+  driver_id: string;
+  name: string;
+  type: string;
+  seats: number;
+  price_per_day: number;
+  description?: string;
+  features: string[];
+  images: string[];
+  available: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export const HotelManagement: React.FC = () => {
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [rooms, setRooms] = useState<HotelRoom[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [hotelOwners, setHotelOwners] = useState<User[]>([]);
+  const [drivers, setDrivers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddHotelDialogOpen, setIsAddHotelDialogOpen] = useState(false);
   const [isEditHotelDialogOpen, setIsEditHotelDialogOpen] = useState(false);
   const [isAddRoomDialogOpen, setIsAddRoomDialogOpen] = useState(false);
   const [isEditRoomDialogOpen, setIsEditRoomDialogOpen] = useState(false);
+  const [isAddVehicleDialogOpen, setIsAddVehicleDialogOpen] = useState(false);
+  const [isEditVehicleDialogOpen, setIsEditVehicleDialogOpen] = useState(false);
   const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
   const [editingRoom, setEditingRoom] = useState<HotelRoom | null>(null);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [selectedHotel, setSelectedHotel] = useState<string>('');
+  const [selectedHotelForVehicles, setSelectedHotelForVehicles] = useState<string>('');
   const [newHotel, setNewHotel] = useState({
     owner_id: '',
     name: '',
@@ -78,13 +100,27 @@ export const HotelManagement: React.FC = () => {
     images: [] as string[],
     available: true
   });
+  const [newVehicle, setNewVehicle] = useState({
+    driver_id: '',
+    name: '',
+    type: '',
+    seats: 4,
+    price_per_day: 0,
+    description: '',
+    features: [] as string[],
+    images: [] as string[],
+    available: true
+  });
   const [amenityInput, setAmenityInput] = useState('');
   const [imageInput, setImageInput] = useState('');
+  const [featureInput, setFeatureInput] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
     fetchHotels();
     fetchHotelOwners();
+    fetchDrivers();
+    fetchVehicles();
   }, []);
 
   useEffect(() => {
@@ -146,6 +182,37 @@ export const HotelManagement: React.FC = () => {
       setHotelOwners(data || []);
     } catch (error) {
       console.error('Error fetching hotel owners:', error);
+    }
+  };
+
+  const fetchDrivers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, email')
+        .eq('role', 'driver');
+
+      if (error) throw error;
+      setDrivers(data || []);
+    } catch (error) {
+      console.error('Error fetching drivers:', error);
+    }
+  };
+
+  const fetchVehicles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select(`
+          *,
+          user_profiles!vehicles_driver_id_fkey(full_name, email)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setVehicles(data || []);
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
     }
   };
 
@@ -318,7 +385,7 @@ export const HotelManagement: React.FC = () => {
         title: "Success",
         description: "Room deleted successfully",
       });
-      
+
       if (selectedHotel) {
         fetchRooms(selectedHotel);
       }
@@ -330,6 +397,113 @@ export const HotelManagement: React.FC = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleAddVehicle = async () => {
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .insert([newVehicle]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Vehicle added successfully",
+      });
+
+      setNewVehicle({
+        driver_id: '',
+        name: '',
+        type: '',
+        seats: 4,
+        price_per_day: 0,
+        description: '',
+        features: [],
+        images: [],
+        available: true
+      });
+      setIsAddVehicleDialogOpen(false);
+      fetchVehicles();
+    } catch (error) {
+      console.error('Error adding vehicle:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add vehicle",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditVehicle = async () => {
+    if (!editingVehicle) return;
+
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .update(editingVehicle)
+        .eq('id', editingVehicle.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Vehicle updated successfully",
+      });
+
+      setIsEditVehicleDialogOpen(false);
+      setEditingVehicle(null);
+      fetchVehicles();
+    } catch (error) {
+      console.error('Error updating vehicle:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update vehicle",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteVehicle = async (vehicleId: string) => {
+    try {
+      const { error} = await supabase
+        .from('vehicles')
+        .delete()
+        .eq('id', vehicleId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Vehicle deleted successfully",
+      });
+
+      fetchVehicles();
+    } catch (error) {
+      console.error('Error deleting vehicle:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete vehicle",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addFeature = () => {
+    if (featureInput.trim()) {
+      setNewVehicle({
+        ...newVehicle,
+        features: [...newVehicle.features, featureInput.trim()]
+      });
+      setFeatureInput('');
+    }
+  };
+
+  const removeFeature = (index: number) => {
+    setNewVehicle({
+      ...newVehicle,
+      features: newVehicle.features.filter((_, i) => i !== index)
+    });
   };
 
   const addAmenity = () => {
@@ -440,9 +614,10 @@ export const HotelManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="hotels" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="hotels">Hotels</TabsTrigger>
           <TabsTrigger value="rooms">Rooms</TabsTrigger>
+          <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
         </TabsList>
 
         <TabsContent value="hotels" className="space-y-6">
@@ -975,6 +1150,227 @@ export const HotelManagement: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="vehicles" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Car className="h-5 w-5" />
+                Vehicle Management
+              </CardTitle>
+              <CardDescription>
+                Manage hotel vehicles
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center mb-4">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search vehicles..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Dialog open={isAddVehicleDialogOpen} onOpenChange={setIsAddVehicleDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Vehicle
+                    </Button>
+                  </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Add New Vehicle</DialogTitle>
+                        <DialogDescription>
+                          Add a new vehicle to the selected hotel.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="vehicle-driver">Driver</Label>
+                          <select
+                            id="vehicle-driver"
+                            value={newVehicle.driver_id}
+                            onChange={(e) => setNewVehicle({ ...newVehicle, driver_id: e.target.value })}
+                            className="w-full p-2 border rounded-md"
+                          >
+                            <option value="">Select a driver</option>
+                            {drivers.map((driver) => (
+                              <option key={driver.id} value={driver.id}>
+                                {(driver as any).full_name} ({driver.email})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="vehicle-name">Vehicle Name</Label>
+                            <Input
+                              id="vehicle-name"
+                              value={newVehicle.name}
+                              onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
+                              placeholder="e.g., Toyota Corolla 2020"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="vehicle-type">Type</Label>
+                            <Input
+                              id="vehicle-type"
+                              value={newVehicle.type}
+                              onChange={(e) => setNewVehicle({ ...newVehicle, type: e.target.value })}
+                              placeholder="e.g., Sedan, SUV"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="vehicle-seats">Seats</Label>
+                            <Input
+                              id="vehicle-seats"
+                              type="number"
+                              value={newVehicle.seats}
+                              onChange={(e) => setNewVehicle({ ...newVehicle, seats: parseInt(e.target.value) || 4 })}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="vehicle-price">Price per Day (PKR)</Label>
+                            <Input
+                              id="vehicle-price"
+                              type="number"
+                              value={newVehicle.price_per_day}
+                              onChange={(e) => setNewVehicle({ ...newVehicle, price_per_day: parseFloat(e.target.value) || 0 })}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="vehicle-description">Description</Label>
+                          <Textarea
+                            id="vehicle-description"
+                            value={newVehicle.description}
+                            onChange={(e) => setNewVehicle({ ...newVehicle, description: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Features</Label>
+                          <div className="flex gap-2 mb-2">
+                            <Input
+                              value={featureInput}
+                              onChange={(e) => setFeatureInput(e.target.value)}
+                              placeholder="Add a feature"
+                              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
+                            />
+                            <Button type="button" onClick={addFeature}>Add</Button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {newVehicle.features.map((feature, index) => (
+                              <Badge key={index} variant="secondary" className="cursor-pointer" onClick={() => removeFeature(index)}>
+                                {feature} ×
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <ImageUpload
+                          images={newVehicle.images}
+                          onImagesChange={(images) => setNewVehicle({ ...newVehicle, images })}
+                          maxImages={8}
+                          label="Vehicle Images"
+                        />
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="vehicle-available"
+                            checked={newVehicle.available}
+                            onChange={(e) => setNewVehicle({ ...newVehicle, available: e.target.checked })}
+                          />
+                          <Label htmlFor="vehicle-available">Available</Label>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAddVehicleDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleAddVehicle}>Add Vehicle</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+              </div>
+
+              <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Vehicle</TableHead>
+                      <TableHead>Driver</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Seats</TableHead>
+                      <TableHead>Price/Day</TableHead>
+                      <TableHead>Images</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {vehicles.map((vehicle) => (
+                      <TableRow key={vehicle.id}>
+                        <TableCell className="font-medium">{vehicle.name}</TableCell>
+                        <TableCell>{(vehicle as any).user_profiles?.full_name || 'Unknown'}</TableCell>
+                        <TableCell>{vehicle.type}</TableCell>
+                        <TableCell>{vehicle.seats}</TableCell>
+                        <TableCell>PKR {vehicle.price_per_day}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Image className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm">{vehicle.images?.length || 0} images</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={vehicle.available ? 'default' : 'secondary'}>
+                            {vehicle.available ? 'Available' : 'Unavailable'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingVehicle(vehicle);
+                                setIsEditVehicleDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the vehicle.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteVehicle(vehicle.id)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Edit Hotel Dialog */}
@@ -1211,6 +1607,89 @@ export const HotelManagement: React.FC = () => {
               Cancel
             </Button>
             <Button onClick={handleEditRoom}>Update Room</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Vehicle Dialog */}
+      <Dialog open={isEditVehicleDialogOpen} onOpenChange={setIsEditVehicleDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Vehicle</DialogTitle>
+            <DialogDescription>
+              Update vehicle information.
+            </DialogDescription>
+          </DialogHeader>
+          {editingVehicle && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-vehicle-name">Vehicle Name</Label>
+                  <Input
+                    id="edit-vehicle-name"
+                    value={editingVehicle.name}
+                    onChange={(e) => setEditingVehicle({ ...editingVehicle, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-vehicle-type">Type</Label>
+                  <Input
+                    id="edit-vehicle-type"
+                    value={editingVehicle.type}
+                    onChange={(e) => setEditingVehicle({ ...editingVehicle, type: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-vehicle-seats">Seats</Label>
+                  <Input
+                    id="edit-vehicle-seats"
+                    type="number"
+                    value={editingVehicle.seats}
+                    onChange={(e) => setEditingVehicle({ ...editingVehicle, seats: parseInt(e.target.value) || 4 })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-vehicle-price">Price per Day (PKR)</Label>
+                  <Input
+                    id="edit-vehicle-price"
+                    type="number"
+                    value={editingVehicle.price_per_day}
+                    onChange={(e) => setEditingVehicle({ ...editingVehicle, price_per_day: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-vehicle-description">Description</Label>
+                <Textarea
+                  id="edit-vehicle-description"
+                  value={editingVehicle.description || ''}
+                  onChange={(e) => setEditingVehicle({ ...editingVehicle, description: e.target.value })}
+                />
+              </div>
+              <ImageUpload
+                images={editingVehicle.images}
+                onImagesChange={(images) => setEditingVehicle({ ...editingVehicle, images })}
+                maxImages={8}
+                label="Vehicle Images"
+              />
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="edit-vehicle-available"
+                  checked={editingVehicle.available}
+                  onChange={(e) => setEditingVehicle({ ...editingVehicle, available: e.target.checked })}
+                />
+                <Label htmlFor="edit-vehicle-available">Available</Label>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditVehicleDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditVehicle}>Update Vehicle</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
