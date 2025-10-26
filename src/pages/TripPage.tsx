@@ -1540,59 +1540,74 @@ const TripDetailsStep = ({ tripForm, setTripForm, handleNextStep, prefilledData 
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="tripName" className="text-gray-800">Trip Name</Label>
-          <Input 
-            id="tripName" 
-            placeholder="e.g., My Northern Pakistan Adventure" 
-            value={tripForm.name} 
+          <Label htmlFor="tripName" className="text-gray-800">
+            Trip Name <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="tripName"
+            placeholder="e.g., My Northern Pakistan Adventure"
+            value={tripForm.name}
             onChange={(e) => setTripForm(prev => ({ ...prev, name: e.target.value }))}
             className="border-gray-300 focus:border-gray-600"
+            required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="people" className="text-gray-800">Number of People</Label>
-          <Input 
-            id="people" 
-            type="number" 
-            min="1" 
-            value={tripForm.numberOfPeople} 
+          <Label htmlFor="people" className="text-gray-800">
+            Number of People <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="people"
+            type="number"
+            min="1"
+            value={tripForm.numberOfPeople}
             onChange={(e) => setTripForm(prev => ({ ...prev, numberOfPeople: Number(e.target.value) }))}
             className="border-gray-300 focus:border-gray-600"
+            required
           />
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="startDate" className="text-gray-800">Start Date</Label>
-          <Input 
-            id="startDate" 
-            type="date" 
-            value={tripForm.startDate} 
+          <Label htmlFor="startDate" className="text-gray-800">
+            Start Date <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="startDate"
+            type="date"
+            value={tripForm.startDate}
             onChange={(e) => setTripForm(prev => ({ ...prev, startDate: e.target.value }))}
             className="border-gray-300 focus:border-gray-600"
+            required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="endDate" className="text-gray-800">End Date</Label>
-          <Input 
-            id="endDate" 
-            type="date" 
-            value={tripForm.endDate} 
+          <Label htmlFor="endDate" className="text-gray-800">
+            End Date <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="endDate"
+            type="date"
+            value={tripForm.endDate}
             onChange={(e) => setTripForm(prev => ({ ...prev, endDate: e.target.value }))}
             className="border-gray-300 focus:border-gray-600"
+            required
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="budget" className="text-gray-800">Budget (PKR)</Label>
-        <Input 
-          id="budget" 
-          placeholder="e.g., 50,000" 
-          value={tripForm.budget} 
+        <Label htmlFor="budget" className="text-gray-800">
+          Budget (PKR) <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="budget"
+          placeholder="e.g., 50,000"
+          value={tripForm.budget}
           onChange={(e) => setTripForm(prev => ({ ...prev, budget: e.target.value }))}
           className="border-gray-300 focus:border-gray-600"
+          required
         />
       </div>
 

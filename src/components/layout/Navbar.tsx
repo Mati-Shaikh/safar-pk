@@ -71,11 +71,11 @@ export const Navbar: React.FC = () => {
               Destinations
             </Link>
             {/* Hide My Trips for customers - they see Coming Soon page instead */}
-            {(!user || !profile || profile.role !== UserRole.CUSTOMER) && (
+            {/* {(!user || !profile || profile.role !== UserRole.CUSTOMER) && (
               <Link to="/trip" className={getNavLinkClass("/trip")}>
                 My Trips
               </Link>
-            )}
+            )} */}
             {/* Show Dashboard link for all logged in users */}
             {user && profile && (
               <Link to="/dashboard" className={getNavLinkClass("/dashboard")}>
@@ -154,7 +154,7 @@ export const Navbar: React.FC = () => {
                 Destinations
               </Link>
               {/* Hide My Trips for customers - they see Coming Soon page instead */}
-              {(!user || !profile || profile.role !== UserRole.CUSTOMER) && (
+              {/* {(!user || !profile || profile.role !== UserRole.CUSTOMER) && (
                 <Link
                   to="/trip"
                   className={getNavLinkClass("/trip", true)}
@@ -162,7 +162,7 @@ export const Navbar: React.FC = () => {
                 >
                   My Trips
                 </Link>
-              )}
+              )} */}
               {/* Show Dashboard link for all logged in users */}
               {user && profile && (
                 <Link
