@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, Mail, Lock, LogIn, UserCircle } from 'lucide-react';
 import { signIn } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -15,6 +16,7 @@ interface LoginFormProps {
 
 export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProps) {
   const { refreshAuth } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     emailOrPhone: '',
     password: ''
@@ -47,6 +49,8 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
         // Refresh auth context to update navbar
         await refreshAuth();
         onSuccess();
+        // Redirect to home page
+        navigate('/');
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
