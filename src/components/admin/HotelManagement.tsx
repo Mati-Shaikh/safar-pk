@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,6 +14,29 @@ import { Building, Plus, Edit, Trash2, Search, Bed, Image, X, ExternalLink, Car 
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/hotel/ImageUpload';
+
+const AVAILABLE_AMENITIES = [
+  'WiFi',
+  'Swimming Pool',
+  'Gym/Fitness Center',
+  'Restaurant',
+  'Bar/Lounge',
+  'Room Service',
+  'Parking',
+  'Free Parking',
+  'Spa',
+  'Concierge',
+  'Laundry Service',
+  'Business Center',
+  'Conference Rooms',
+  'Airport Shuttle',
+  'Pet Friendly',
+  'Air Conditioning',
+  'Breakfast Included',
+  '24/7 Front Desk',
+  'Elevator',
+  'Non-Smoking Rooms'
+];
 
 interface Hotel {
   id: string;
@@ -111,8 +135,6 @@ export const HotelManagement: React.FC = () => {
     images: [] as string[],
     available: true
   });
-  const [amenityInput, setAmenityInput] = useState('');
-  const [imageInput, setImageInput] = useState('');
   const [featureInput, setFeatureInput] = useState('');
   const { toast } = useToast();
 
@@ -175,11 +197,17 @@ export const HotelManagement: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('id, name, email')
-        .eq('role', 'hotel');
+        .select('id, full_name, email')
+        .eq('role', 'hotel_owner');
 
       if (error) throw error;
-      setHotelOwners(data || []);
+      // Map full_name to name for compatibility with the User interface
+      const mappedData = (data || []).map(owner => ({
+        id: owner.id,
+        name: owner.full_name,
+        email: owner.email
+      }));
+      setHotelOwners(mappedData);
     } catch (error) {
       console.error('Error fetching hotel owners:', error);
     }
@@ -217,6 +245,24 @@ export const HotelManagement: React.FC = () => {
   };
 
   const handleAddHotel = async () => {
+    if (!newHotel.owner_id) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a hotel owner",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newHotel.name || !newHotel.location) {
+      toast({
+        title: "Validation Error",
+        description: "Hotel name and location are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('hotels')
@@ -228,7 +274,7 @@ export const HotelManagement: React.FC = () => {
         title: "Success",
         description: "Hotel added successfully",
       });
-      
+
       setNewHotel({
         owner_id: '',
         name: '',
@@ -506,93 +552,23 @@ export const HotelManagement: React.FC = () => {
     });
   };
 
-  const addAmenity = () => {
-    if (amenityInput.trim()) {
-      setNewHotel({
-        ...newHotel,
-        amenities: [...newHotel.amenities, amenityInput.trim()]
-      });
-      setAmenityInput('');
-    }
+  const toggleAmenity = (amenity: string) => {
+    setNewHotel(prev => ({
+      ...prev,
+      amenities: prev.amenities.includes(amenity)
+        ? prev.amenities.filter(a => a !== amenity)
+        : [...prev.amenities, amenity]
+    }));
   };
 
-  const removeAmenity = (index: number) => {
-    setNewHotel({
-      ...newHotel,
-      amenities: newHotel.amenities.filter((_, i) => i !== index)
-    });
-  };
-
-  const addImage = () => {
-    if (imageInput.trim()) {
-      setNewHotel({
-        ...newHotel,
-        images: [...newHotel.images, imageInput.trim()]
-      });
-      setImageInput('');
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setNewHotel({
-      ...newHotel,
-      images: newHotel.images.filter((_, i) => i !== index)
-    });
-  };
-
-  const addRoomImage = () => {
-    if (imageInput.trim()) {
-      setNewRoom({
-        ...newRoom,
-        images: [...newRoom.images, imageInput.trim()]
-      });
-      setImageInput('');
-    }
-  };
-
-  const removeRoomImage = (index: number) => {
-    setNewRoom({
-      ...newRoom,
-      images: newRoom.images.filter((_, i) => i !== index)
-    });
-  };
-
-  const addEditHotelImage = () => {
-    if (imageInput.trim() && editingHotel) {
-      setEditingHotel({
-        ...editingHotel,
-        images: [...editingHotel.images, imageInput.trim()]
-      });
-      setImageInput('');
-    }
-  };
-
-  const removeEditHotelImage = (index: number) => {
-    if (editingHotel) {
-      setEditingHotel({
-        ...editingHotel,
-        images: editingHotel.images.filter((_, i) => i !== index)
-      });
-    }
-  };
-
-  const addEditRoomImage = () => {
-    if (imageInput.trim() && editingRoom) {
-      setEditingRoom({
-        ...editingRoom,
-        images: [...editingRoom.images, imageInput.trim()]
-      });
-      setImageInput('');
-    }
-  };
-
-  const removeEditRoomImage = (index: number) => {
-    if (editingRoom) {
-      setEditingRoom({
-        ...editingRoom,
-        images: editingRoom.images.filter((_, i) => i !== index)
-      });
-    }
+  const toggleEditHotelAmenity = (amenity: string) => {
+    if (!editingHotel) return;
+    setEditingHotel(prev => ({
+      ...prev!,
+      amenities: prev!.amenities.includes(amenity)
+        ? prev!.amenities.filter(a => a !== amenity)
+        : [...prev!.amenities, amenity]
+    }));
   };
 
   const filteredHotels = hotels.filter(hotel =>
@@ -712,81 +688,41 @@ export const HotelManagement: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <Label>Amenities</Label>
-                        <div className="flex gap-2 mb-2">
-                          <Input
-                            value={amenityInput}
-                            onChange={(e) => setAmenityInput(e.target.value)}
-                            placeholder="Add an amenity"
-                            onKeyDown={(e) => e.key === 'Enter' && addAmenity()}
-                          />
-                          <Button type="button" onClick={addAmenity}>Add</Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {newHotel.amenities.map((amenity, index) => (
-                            <Badge key={index} variant="secondary" className="cursor-pointer" onClick={() => removeAmenity(index)}>
-                              {amenity} ×
-                            </Badge>
+                        <Label>Hotel Amenities</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-md max-h-60 overflow-y-auto">
+                          {AVAILABLE_AMENITIES.map((amenity) => (
+                            <div key={amenity} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`new-${amenity}`}
+                                checked={newHotel.amenities.includes(amenity)}
+                                onCheckedChange={() => toggleAmenity(amenity)}
+                              />
+                              <Label
+                                htmlFor={`new-${amenity}`}
+                                className="text-sm font-normal cursor-pointer"
+                              >
+                                {amenity}
+                              </Label>
+                            </div>
                           ))}
                         </div>
-                      </div>
-                      <div>
-                        <Label>Hotel Images</Label>
-                        <div className="flex gap-2 mb-2">
-                          <Input
-                            value={imageInput}
-                            onChange={(e) => setImageInput(e.target.value)}
-                            placeholder="Add image URL (https://...)"
-                            onKeyDown={(e) => e.key === 'Enter' && addImage()}
-                          />
-                          <Button type="button" onClick={addImage}>
-                            <Plus className="h-4 w-4 mr-1" />
-                            Add
-                          </Button>
-                        </div>
-                        {newHotel.images.length > 0 && (
-                          <div className="grid grid-cols-3 gap-3 mb-3">
-                            {newHotel.images.map((image, index) => (
-                              <div key={index} className="relative group">
-                                <img
-                                  src={image}
-                                  alt={`Hotel image ${index + 1}`}
-                                  className="w-full h-24 object-cover rounded-lg border"
-                                  onError={(e) => {
-                                    e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxMi0zIDMtMy0zIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvcG5nPgo=';
-                                  }}
-                                />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
-                                  <div className="opacity-0 group-hover:opacity-100 flex gap-2">
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="secondary"
-                                      onClick={() => window.open(image, '_blank')}
-                                    >
-                                      <ExternalLink className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="destructive"
-                                      onClick={() => removeImage(index)}
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                </div>
-                                <div className="absolute bottom-1 left-1 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                                  {index + 1}
-                                </div>
-                              </div>
+                        {newHotel.amenities.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <p className="text-sm text-muted-foreground w-full">Selected amenities:</p>
+                            {newHotel.amenities.map((amenity, index) => (
+                              <Badge key={index} variant="secondary">
+                                {amenity}
+                              </Badge>
                             ))}
                           </div>
                         )}
-                        <div className="text-sm text-gray-500">
-                          {newHotel.images.length} image(s) added
-                        </div>
                       </div>
+                      <ImageUpload
+                        images={newHotel.images}
+                        onImagesChange={(images) => setNewHotel({ ...newHotel, images })}
+                        maxImages={10}
+                        label="Hotel Images"
+                      />
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setIsAddHotelDialogOpen(false)}>
@@ -976,60 +912,12 @@ export const HotelManagement: React.FC = () => {
                             onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
                           />
                         </div>
-                        <div>
-                          <Label>Room Images</Label>
-                          <div className="flex gap-2 mb-2">
-                            <Input
-                              value={imageInput}
-                              onChange={(e) => setImageInput(e.target.value)}
-                              placeholder="Add image URL (https://...)"
-                              onKeyDown={(e) => e.key === 'Enter' && addRoomImage()}
-                            />
-                            <Button type="button" onClick={addRoomImage}>
-                              <Plus className="h-4 w-4 mr-1" />
-                              Add
-                            </Button>
-                          </div>
-                          {newRoom.images.length > 0 && (
-                            <div className="grid grid-cols-3 gap-3 mb-3">
-                              {newRoom.images.map((image, index) => (
-                                <div key={index} className="relative group">
-                                  <img
-                                    src={image}
-                                    alt={`Room image ${index + 1}`}
-                                    className="w-full h-20 object-cover rounded-lg border"
-                                    onError={(e) => {
-                                      e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxMi0zIDMtMy0zIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvcG5nPgo=';
-                                    }}
-                                  />
-                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
-                                    <div className="opacity-0 group-hover:opacity-100 flex gap-1">
-                                      <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="secondary"
-                                        onClick={() => window.open(image, '_blank')}
-                                      >
-                                        <ExternalLink className="h-3 w-3" />
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="destructive"
-                                        onClick={() => removeRoomImage(index)}
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          <div className="text-sm text-gray-500">
-                            {newRoom.images.length} image(s) added
-                          </div>
-                        </div>
+                        <ImageUpload
+                          images={newRoom.images}
+                          onImagesChange={(images) => setNewRoom({ ...newRoom, images })}
+                          maxImages={8}
+                          label="Room Images"
+                        />
                         <div className="flex items-center space-x-2">
                           <input
                             type="checkbox"
@@ -1423,62 +1311,41 @@ export const HotelManagement: React.FC = () => {
                 />
               </div>
               <div>
-                <Label>Hotel Images</Label>
-                <div className="flex gap-2 mb-2">
-                  <Input
-                    value={imageInput}
-                    onChange={(e) => setImageInput(e.target.value)}
-                    placeholder="Add image URL (https://...)"
-                    onKeyDown={(e) => e.key === 'Enter' && addEditHotelImage()}
-                  />
-                  <Button type="button" onClick={addEditHotelImage}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add
-                  </Button>
+                <Label>Hotel Amenities</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-md max-h-60 overflow-y-auto">
+                  {AVAILABLE_AMENITIES.map((amenity) => (
+                    <div key={amenity} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`edit-${amenity}`}
+                        checked={editingHotel.amenities.includes(amenity)}
+                        onCheckedChange={() => toggleEditHotelAmenity(amenity)}
+                      />
+                      <Label
+                        htmlFor={`edit-${amenity}`}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {amenity}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
-                {editingHotel.images.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    {editingHotel.images.map((image, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={image}
-                          alt={`Hotel image ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg border"
-                          onError={(e) => {
-                            e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxMi0zIDMtMy0zIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvcG5nPgo=';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
-                          <div className="opacity-0 group-hover:opacity-100 flex gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => window.open(image, '_blank')}
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removeEditHotelImage(index)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="absolute bottom-1 left-1 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                          {index + 1}
-                        </div>
-                      </div>
+                {editingHotel.amenities.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <p className="text-sm text-muted-foreground w-full">Selected amenities:</p>
+                    {editingHotel.amenities.map((amenity, index) => (
+                      <Badge key={index} variant="secondary">
+                        {amenity}
+                      </Badge>
                     ))}
                   </div>
                 )}
-                <div className="text-sm text-gray-500">
-                  {editingHotel.images.length} image(s) added
-                </div>
               </div>
+              <ImageUpload
+                images={editingHotel.images}
+                onImagesChange={(images) => setEditingHotel({ ...editingHotel, images })}
+                maxImages={10}
+                label="Hotel Images"
+              />
             </div>
           )}
           <DialogFooter>
@@ -1546,60 +1413,12 @@ export const HotelManagement: React.FC = () => {
                 />
                 <Label htmlFor="edit-room-available">Available</Label>
               </div>
-              <div>
-                <Label>Room Images</Label>
-                <div className="flex gap-2 mb-2">
-                  <Input
-                    value={imageInput}
-                    onChange={(e) => setImageInput(e.target.value)}
-                    placeholder="Add image URL (https://...)"
-                    onKeyDown={(e) => e.key === 'Enter' && addEditRoomImage()}
-                  />
-                  <Button type="button" onClick={addEditRoomImage}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add
-                  </Button>
-                </div>
-                {editingRoom.images.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    {editingRoom.images.map((image, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={image}
-                          alt={`Room image ${index + 1}`}
-                          className="w-full h-20 object-cover rounded-lg border"
-                          onError={(e) => {
-                            e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Im0xNSAxMi0zIDMtMy0zIiBzdHJva2U9IiM5Y2EzYWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvcG5nPgo=';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
-                          <div className="opacity-0 group-hover:opacity-100 flex gap-1">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => window.open(image, '_blank')}
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removeEditRoomImage(index)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="text-sm text-gray-500">
-                  {editingRoom.images.length} image(s) added
-                </div>
-              </div>
+              <ImageUpload
+                images={editingRoom.images}
+                onImagesChange={(images) => setEditingRoom({ ...editingRoom, images })}
+                maxImages={8}
+                label="Room Images"
+              />
             </div>
           )}
           <DialogFooter>
