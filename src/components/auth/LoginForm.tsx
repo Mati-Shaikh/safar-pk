@@ -49,8 +49,8 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
         // Refresh auth context to update navbar
         await refreshAuth();
         onSuccess();
-        // Redirect to home page
-        navigate('/');
+        // Redirect to dashboard
+        navigate('/dashboard');
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
@@ -128,7 +128,7 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>
 
-          <div className="text-center pt-4">
+          <div className="text-center pt-4 space-y-2">
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}
               <button
@@ -138,6 +138,15 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
               >
                 Sign up here
               </button>
+            </p>
+            <p className="text-sm text-gray-600">
+              Are you a service provider?{' '}
+              <a
+                href="/partner"
+                className="text-green-600 hover:text-green-800 font-medium"
+              >
+                Partner Login
+              </a>
             </p>
           </div>
         </form>

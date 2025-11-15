@@ -132,10 +132,18 @@ export const RoomForm: React.FC<RoomFormProps> = ({
             <Label htmlFor="price_per_night">Price per Night *</Label>
             <Input
               id="price_per_night"
-              type="text"
+              type="number"
+              step="1"
+              min="0"
               value={formData.price_per_night}
-              onChange={(e) => handleInputChange('price_per_night', e.target.value)}
-              placeholder="e.g., 5000 PKR or $50"
+              onChange={(e) => {
+                const value = e.target.value;
+                // Only allow integers (no decimals)
+                if (value === '' || /^\d+$/.test(value)) {
+                  handleInputChange('price_per_night', value);
+                }
+              }}
+              placeholder="e.g., 5000"
               required
             />
           </div>

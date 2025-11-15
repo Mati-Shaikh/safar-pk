@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, Mail, Lock, User, Phone, UserPlus } from 'lucide-react';
 import { signUp, UserRole } from '@/lib/supabase';
@@ -40,12 +39,6 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
     }));
   };
 
-  const handleRoleChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      role: value as UserRole
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,23 +172,6 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">
-              Account Type <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.role} onValueChange={handleRoleChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your account type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={UserRole.CUSTOMER}>Customer</SelectItem>
-                <SelectItem value={UserRole.DRIVER}>Driver</SelectItem>
-                <SelectItem value={UserRole.HOTEL_OWNER}>Hotel Owner</SelectItem>
-                <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="password">
               Password <span className="text-red-500">*</span>
             </Label>
@@ -255,7 +231,7 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
             {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
 
-          <div className="text-center pt-4">
+          <div className="text-center pt-4 space-y-2">
             <p className="text-sm text-gray-600">
               Already have an account?{' '}
               <button
@@ -265,6 +241,15 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
               >
                 Sign in here
               </button>
+            </p>
+            <p className="text-sm text-gray-600">
+              Are you a service provider?{' '}
+              <a
+                href="/partner"
+                className="text-green-600 hover:text-green-800 font-medium"
+              >
+                Register as Partner
+              </a>
             </p>
           </div>
         </form>

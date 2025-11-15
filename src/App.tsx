@@ -11,6 +11,7 @@ import Destinations from "./pages/Destinations";
 import NotFound from "./pages/NotFound";
 import TripPage from "./pages/TripPage";
 import Map from "./pages/MapManager";
+import Partner from "./pages/Partner";
 import { DriverDashboard } from "./pages/DriverDashboard";
 import { HotelDashboard } from "./pages/HotelDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
@@ -42,13 +43,10 @@ const AppContent = () => {
         <Route path="/destinations" element={<Destinations />} />
         <Route path="/trip" element={<TripPage />} />
         <Route path="/map" element={<Map />} />
+        <Route path="/partner" element={<Partner />} />
 
-        {/* Protected routes - Add these later when you create dashboard components */}
-        {user && profile && (
-          <>
-            <Route path="/dashboard" element={getDashboard()} />
-          </>
-        )}
+        {/* Dashboard route - always available, handles auth internally */}
+        <Route path="/dashboard" element={getDashboard()} />
 
         {/* Fallback */}
         <Route path="*" element={<NotFound />} />
