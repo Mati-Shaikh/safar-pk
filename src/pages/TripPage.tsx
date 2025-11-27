@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { supabase, createBookingsFromItinerary } from '@/lib/supabase';
 import AuthModal from '@/components/auth/AuthModal';
 import AuthRequiredModal from '@/components/AuthRequiredModal';
 
@@ -654,7 +654,7 @@ const CarImageGallery = ({ car, selectedCar }) => {
 };
 
 // Car Selection Modal Component
-const CarSelectionModal = ({ isOpen, onClose, onCarSelect, selectedCar, onConfirm }) => {
+const CarSelectionModal = ({ isOpen, onClose, onCarSelect, selectedCar, onConfirm, vehiclesList = [] }) => {
   const [selectedCarDetails, setSelectedCarDetails] = useState(null);
 
   const handleCarSelect = (car) => {
@@ -679,7 +679,9 @@ const CarSelectionModal = ({ isOpen, onClose, onCarSelect, selectedCar, onConfir
           <DialogDescription>
             {selectedCarDetails
               ? 'Vehicle details and image gallery'
-              : 'Choose the perfect vehicle for your trip with pricing per day'
+              : vehiclesList.length === 0
+                ? 'No vehicles available at the moment'
+                : 'Choose the perfect vehicle for your trip with pricing per day'
             }
           </DialogDescription>
           {selectedCarDetails && (
@@ -695,7 +697,13 @@ const CarSelectionModal = ({ isOpen, onClose, onCarSelect, selectedCar, onConfir
           )}
         </DialogHeader>
 
-        {selectedCarDetails ? (
+        {vehiclesList.length === 0 ? (
+          <div className="text-center py-16">
+            <Car className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 mb-2">No vehicles available</p>
+            <p className="text-sm text-gray-400">Please check back later or contact support</p>
+          </div>
+        ) : selectedCarDetails ? (
           // Detailed view of selected car
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -758,7 +766,7 @@ const CarSelectionModal = ({ isOpen, onClose, onCarSelect, selectedCar, onConfir
         ) : (
           // Grid view of all cars
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-2">
-            {CAR_OPTIONS.map((car) => (
+            {vehiclesList.map((car) => (
               <Card
                 key={car.id}
                 className={`cursor-pointer transition-all duration-300 border-2 hover:shadow-lg ${
@@ -962,22 +970,62 @@ const RoomImageGallery = ({ room, selectedRoom }) => {
 };
 
 // Room Selection Modal Component
-const RoomSelectionModal = ({ isOpen, onClose, hotelName, onRoomSelect, selectedRoom, onConfirm }) => {
-  const hotel = HOTELS_WITH_ROOMS.find(h => h.name === hotelName);
+const RoomSelectionModal = ({ isOpen, onClose, hotelId, hotelName, onRoomSelect, selectedRoom, onConfirm, hotelRoomsList = [] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  if (!hotel) return null;
+  // Filter rooms for this specific hotel
+  const hotelRooms = hotelRoomsList.filter(room => room.hotel_id === hotelId);
+
+  if (hotelRooms.length === 0 && isOpen) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-gray-800">Select a Room - {hotelName}</DialogTitle>
+            <DialogDescription>
+              No rooms available for this hotel at the moment
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-center py-16">
+            <Star className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 mb-2">No rooms available</p>
+            <p className="text-sm text-gray-400">Please check back later or choose a different hotel</p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const nextRoom = () => {
-    setCurrentIndex((prev) => (prev + 1) % hotel.rooms.length);
+    setCurrentIndex((prev) => (prev + 1) % hotelRooms.length);
   };
 
   const prevRoom = () => {
-    setCurrentIndex((prev) => (prev - 1 + hotel.rooms.length) % hotel.rooms.length);
+    setCurrentIndex((prev) => (prev - 1 + hotelRooms.length) % hotelRooms.length);
   };
 
   const handleRoomSelect = (room) => {
-    onRoomSelect(room);
+    // Transform room data to match the expected interface
+    const transformedRoom = {
+      id: room.id,
+      type: room.type,
+      description: room.description,
+      price: room.price_per_night,
+      capacity: room.capacity,
+      amenities: room.amenities || [],
+      images: room.images || [],
+      available: room.available
+    };
+    onRoomSelect(transformedRoom);
   };
 
   return (
@@ -997,7 +1045,18 @@ const RoomSelectionModal = ({ isOpen, onClose, hotelName, onRoomSelect, selected
               className="flex transition-transform duration-300 ease-in-out"
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
-              {hotel.rooms.map((room) => (
+              {hotelRooms.map((room) => {
+                const roomData = {
+                  id: room.id,
+                  type: room.type,
+                  description: room.description,
+                  price: room.price_per_night,
+                  capacity: room.capacity,
+                  amenities: room.amenities || [],
+                  images: room.images || [],
+                  available: room.available
+                };
+                return (
                 <div key={room.id} className="w-full flex-shrink-0">
                   <Card
                     className={`cursor-pointer transition-all duration-300 border-2 ${
@@ -1009,25 +1068,25 @@ const RoomSelectionModal = ({ isOpen, onClose, hotelName, onRoomSelect, selected
                   >
                     <div className="relative">
                       {/* Room Image Gallery */}
-                      <RoomImageGallery room={room} selectedRoom={selectedRoom} />
+                      <RoomImageGallery room={roomData} selectedRoom={selectedRoom} />
                     </div>
 
                     <CardContent className="p-6">
                       <div className="space-y-4">
                         <div>
-                          <h3 className="text-2xl font-bold text-gray-800">{room.type}</h3>
-                          <p className="text-sm text-gray-500 mt-2">{room.description}</p>
+                          <h3 className="text-2xl font-bold text-gray-800">{roomData.type}</h3>
+                          <p className="text-sm text-gray-500 mt-2">{roomData.description}</p>
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-3xl font-bold text-gray-800">{room.price}</span>
+                          <span className="text-3xl font-bold text-gray-800">{roomData.price}</span>
                           <span className="text-sm text-gray-500">per night</span>
                         </div>
 
                         <div>
                           <h4 className="font-medium text-gray-700 mb-2">Amenities:</h4>
                           <div className="flex flex-wrap gap-2">
-                            {room.amenities.map((amenity, index) => (
+                            {roomData.amenities.map((amenity, index) => (
                               <Badge key={index} variant="outline" className="text-xs">
                                 {amenity}
                               </Badge>
@@ -1038,7 +1097,8 @@ const RoomSelectionModal = ({ isOpen, onClose, hotelName, onRoomSelect, selected
                     </CardContent>
                   </Card>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
 
@@ -1062,7 +1122,7 @@ const RoomSelectionModal = ({ isOpen, onClose, hotelName, onRoomSelect, selected
 
           {/* Dots indicator */}
           <div className="flex justify-center mt-4 space-x-2">
-            {hotel.rooms.map((_, index) => (
+            {hotelRooms.map((_, index) => (
               <button
                 key={index}
                 className={`w-2 h-2 rounded-full transition-colors ${
@@ -1096,12 +1156,13 @@ const RoomSelectionModal = ({ isOpen, onClose, hotelName, onRoomSelect, selected
 };
 
 // Itinerary Day Card Component
-const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
+const ItineraryDayCard = ({ day, dayIndex, updateItinerary, vehicles, hotels, hotelRooms }) => {
   const [roomModalOpen, setRoomModalOpen] = useState(false);
   const [carModalOpen, setCarModalOpen] = useState(false);
   const [currentSlotId, setCurrentSlotId] = useState(null);
   const [tempSelectedRoom, setTempSelectedRoom] = useState(null);
   const [tempSelectedCar, setTempSelectedCar] = useState(null);
+  const [selectedHotelId, setSelectedHotelId] = useState(null);
   const addSlot = () => {
     const newSlot = {
       id: Date.now(),
@@ -1199,6 +1260,9 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
 
   const openRoomModal = (slotId, hotelName) => {
     setCurrentSlotId(slotId);
+    // Find the hotel ID from the hotel name
+    const hotel = hotels.find(h => h.name === hotelName);
+    setSelectedHotelId(hotel?.id || null);
     setTempSelectedRoom(day.slots.find(s => s.id === slotId)?.selectedRoom || null);
     setRoomModalOpen(true);
   };
@@ -1398,8 +1462,8 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
                       <SelectValue placeholder="Select a hotel" />
                     </SelectTrigger>
                     <SelectContent>
-                      {HOTEL_OPTIONS.map(hotel => (
-                        <SelectItem key={hotel} value={hotel}>{hotel}</SelectItem>
+                      {hotels.map(hotel => (
+                        <SelectItem key={hotel.id} value={hotel.name}>{hotel.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1517,10 +1581,12 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
       <RoomSelectionModal
         isOpen={roomModalOpen}
         onClose={cancelRoomSelection}
+        hotelId={selectedHotelId}
         hotelName={day.slots.find(s => s.id === currentSlotId)?.hotelDetails || ''}
         onRoomSelect={handleRoomSelect}
         selectedRoom={tempSelectedRoom}
         onConfirm={confirmRoomSelection}
+        hotelRoomsList={hotelRooms}
       />
 
       {/* Car Selection Modal */}
@@ -1530,6 +1596,7 @@ const ItineraryDayCard = ({ day, dayIndex, updateItinerary }) => {
         onCarSelect={handleCarSelect}
         selectedCar={tempSelectedCar}
         onConfirm={confirmCarSelection}
+        vehiclesList={vehicles}
       />
     </Card>
   );
@@ -1707,19 +1774,22 @@ const TripDetailsStep = ({ tripForm, setTripForm, handleNextStep, prefilledData 
     </div>
 );
 
-const ItineraryBuilderStep = ({ tripForm, updateItinerary, setCurrentStep, handleNextStep }) => (
+const ItineraryBuilderStep = ({ tripForm, updateItinerary, setCurrentStep, handleNextStep, vehicles, hotels, hotelRooms }) => (
     <div className="space-y-6">
       <div className="text-center mb-6">
         <h3 className="text-lg font-semibold text-gray-800">Plan Your Daily Activities</h3>
         <p className="text-sm text-gray-600">Create a detailed itinerary for each day of your trip</p>
       </div>
-      
+
       {tripForm.itinerary.map((day, dayIndex) => (
-        <ItineraryDayCard 
-          key={day.date} 
-          day={day} 
-          dayIndex={dayIndex} 
-          updateItinerary={updateItinerary} 
+        <ItineraryDayCard
+          key={day.date}
+          day={day}
+          dayIndex={dayIndex}
+          updateItinerary={updateItinerary}
+          vehicles={vehicles}
+          hotels={hotels}
+          hotelRooms={hotelRooms}
         />
       ))}
       
@@ -2096,6 +2166,91 @@ export default function TripsPage() {
   const [pendingTripForm, setPendingTripForm] = useState(null);
   const [pendingCurrentStep, setPendingCurrentStep] = useState(null);
 
+  // State for dynamic data from Supabase
+  const [vehicles, setVehicles] = useState<Car[]>([]);
+  const [hotels, setHotels] = useState<any[]>([]);
+  const [hotelRooms, setHotelRooms] = useState<any[]>([]);
+  const [loadingVehicles, setLoadingVehicles] = useState(true);
+  const [loadingHotels, setLoadingHotels] = useState(true);
+
+  // Load vehicles from Supabase
+  useEffect(() => {
+    const loadVehicles = async () => {
+      try {
+        setLoadingVehicles(true);
+        const { data, error } = await supabase
+          .from('vehicles')
+          .select('*')
+          .eq('available', true)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading vehicles:', error);
+        } else {
+          // Transform Supabase data to match the Car interface
+          const transformedVehicles: Car[] = (data || []).map(vehicle => ({
+            id: vehicle.id,
+            name: vehicle.name,
+            type: vehicle.type,
+            seats: vehicle.seats,
+            pricePerDay: `PKR ${vehicle.price_per_day}`,
+            images: vehicle.images || [],
+            features: vehicle.features || [],
+            description: vehicle.description || ''
+          }));
+          setVehicles(transformedVehicles);
+        }
+      } catch (error) {
+        console.error('Error loading vehicles:', error);
+      } finally {
+        setLoadingVehicles(false);
+      }
+    };
+
+    loadVehicles();
+  }, []);
+
+  // Load hotels and hotel rooms from Supabase
+  useEffect(() => {
+    const loadHotelsAndRooms = async () => {
+      try {
+        setLoadingHotels(true);
+
+        // Fetch hotels
+        const { data: hotelsData, error: hotelsError } = await supabase
+          .from('hotels')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (hotelsError) {
+          console.error('Error loading hotels:', hotelsError);
+          return;
+        }
+
+        // Fetch all hotel rooms
+        const { data: roomsData, error: roomsError } = await supabase
+          .from('hotel_rooms')
+          .select('*')
+          .eq('available', true)
+          .order('created_at', { ascending: false });
+
+        if (roomsError) {
+          console.error('Error loading hotel rooms:', roomsError);
+          return;
+        }
+
+        setHotels(hotelsData || []);
+        setHotelRooms(roomsData || []);
+      } catch (error) {
+        console.error('Error loading hotels and rooms:', error);
+      } finally {
+        setLoadingHotels(false);
+      }
+    };
+
+    loadHotelsAndRooms();
+  }, []);
+
   // Load user trips from Supabase instead of localStorage
   useEffect(() => {
     const loadUserTrips = async () => {
@@ -2192,6 +2347,22 @@ export default function TripsPage() {
 
           console.log('Trip created successfully:', data);
 
+          // Create bookings for all activities with vehicles and hotel rooms
+          console.log('Creating bookings from itinerary...');
+          const bookingResult = await createBookingsFromItinerary(
+            data.id,
+            user.id,
+            pendingTripForm.itinerary
+          );
+
+          console.log('Booking creation result:', bookingResult);
+
+          if (bookingResult.errors.length > 0) {
+            console.warn('Some bookings failed to create:', bookingResult.errors);
+          } else if (bookingResult.bookings.length > 0) {
+            console.log(`Successfully created ${bookingResult.bookings.length} bookings`);
+          }
+
           // Add the new trip to local state
           setUserTrips(prev => [data, ...prev]);
 
@@ -2211,7 +2382,10 @@ export default function TripsPage() {
           });
 
           // Show success message
-          alert('Trip created successfully! Welcome to Safar Pakistan!');
+          const bookingSummary = bookingResult.bookings.length > 0
+            ? ` ${bookingResult.bookings.length} booking(s) created.`
+            : '';
+          alert(`Trip created successfully! Welcome to Safar Pakistan!${bookingSummary}`);
 
         } catch (error) {
           console.error('Error creating trip:', error);
@@ -2324,6 +2498,26 @@ export default function TripsPage() {
 
       console.log('Trip created successfully:', data);
 
+      // Create bookings for all activities with vehicles and hotel rooms
+      console.log('Creating bookings from itinerary...');
+      const bookingResult = await createBookingsFromItinerary(
+        data.id,
+        user.id,
+        tripForm.itinerary
+      );
+
+      console.log('Booking creation result:', bookingResult);
+
+      if (bookingResult.errors.length > 0) {
+        console.warn('Some bookings failed to create:', bookingResult.errors);
+        // Show warning but don't fail the entire trip creation
+        alert(
+          `Trip created successfully!\n\nNote: ${bookingResult.bookings.length} bookings created, but ${bookingResult.errors.length} booking(s) failed. Please check the console for details.`
+        );
+      } else if (bookingResult.bookings.length > 0) {
+        console.log(`Successfully created ${bookingResult.bookings.length} bookings`);
+      }
+
       // Add the new trip to local state
       setUserTrips(prev => [data, ...prev]);
 
@@ -2341,7 +2535,11 @@ export default function TripsPage() {
         itinerary: [],
       });
 
-      alert(`🎉 Your custom trip "${tripData.name}" has been created successfully! You can view it in your trips section.`);
+      const bookingSummary = bookingResult.bookings.length > 0
+        ? `\n\n${bookingResult.bookings.length} booking(s) created for vehicles and hotel rooms.`
+        : '';
+
+      alert(`🎉 Your custom trip "${tripData.name}" has been created successfully!${bookingSummary}\n\nYou can view it in your trips section.`);
     } catch (error) {
       console.error('Error creating trip:', error);
       alert('Failed to create trip. Please try again.');
@@ -2441,14 +2639,17 @@ export default function TripsPage() {
           prefilledData={location.state?.prefilledData}
         />;
       case 2:
-        return <ItineraryBuilderStep 
+        return <ItineraryBuilderStep
           tripForm={tripForm}
           updateItinerary={updateItinerary}
           setCurrentStep={setCurrentStep}
           handleNextStep={handleNextStep}
+          vehicles={vehicles}
+          hotels={hotels}
+          hotelRooms={hotelRooms}
         />;
       case 3:
-        return <ReviewStep 
+        return <ReviewStep
           tripForm={tripForm}
           handleCreateTrip={handleCreateTrip}
           setCurrentStep={setCurrentStep}

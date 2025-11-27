@@ -59,7 +59,7 @@ const AppContent = () => {
 
     switch (profile.role) {
       case UserRole.CUSTOMER:
-        return <ComingSoon />;
+        return <TripPage />;
       case UserRole.DRIVER:
         return <DriverDashboard />;
       case UserRole.HOTEL_OWNER:

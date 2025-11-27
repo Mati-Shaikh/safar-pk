@@ -15,6 +15,8 @@ import Footer from '@/components/layout/Footer';
 import { HotelList } from '@/components/hotel/HotelList';
 import { HotelForm } from '@/components/hotel/HotelForm';
 import { ImageUpload } from '@/components/hotel/ImageUpload';
+import { HotelBookingCalendar } from '@/components/hotel/HotelBookingCalendar';
+import '@/components/driver/booking-calendar.css';
 import { Hotel, HotelRoom } from '@/types';
 import {
   createHotel,
@@ -24,7 +26,9 @@ import {
   createHotelRoom,
   getHotelRooms,
   updateHotelRoom,
-  deleteHotelRoom
+  deleteHotelRoom,
+  getHotelBookingsByOwner,
+  updateBookingStatus
 } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -52,9 +56,11 @@ export const HotelDashboard: React.FC = () => {
   // Hotel management state
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [rooms, setRooms] = useState<{ [hotelId: string]: HotelRoom[] }>({});
+  const [hotelBookings, setHotelBookings] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingBookings, setLoadingBookings] = useState(true);
   const [showCreateHotel, setShowCreateHotel] = useState(false);
   const [showCreateVehicle, setShowCreateVehicle] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
@@ -71,20 +77,65 @@ export const HotelDashboard: React.FC = () => {
   });
   const [featureInput, setFeatureInput] = useState('');
 
-  const hotelBookings = bookings.filter(booking => 
+  // Legacy bookings from context (keeping for backward compatibility)
+  const contextHotelBookings = bookings.filter(booking =>
     booking.type === 'hotel' && booking.providerId === user?.id
   );
 
-  const handleBookingAction = (bookingId: string, action: 'confirmed' | 'rejected') => {
-    updateBooking(bookingId, { status: action });
+  const handleBookingAction = async (bookingId: string, action: 'confirmed' | 'cancelled') => {
+    try {
+      const { error } = await updateBookingStatus(bookingId, action);
+      if (error) {
+        console.error('Error updating booking status:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update booking status",
+          variant: "destructive",
+        });
+      } else {
+        // Reload bookings
+        loadBookings();
+        toast({
+          title: "Success",
+          description: `Booking ${action} successfully!`,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update booking status",
+        variant: "destructive",
+      });
+    }
   };
 
-  // Load hotels, rooms, drivers, and vehicles
+  // Load bookings
+  const loadBookings = async () => {
+    if (!user?.id) return;
+
+    setLoadingBookings(true);
+    try {
+      const { data, error } = await getHotelBookingsByOwner(user.id);
+      if (error) {
+        console.error('Error loading bookings:', error);
+      } else {
+        setHotelBookings(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading bookings:', error);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  // Load hotels, rooms, drivers, vehicles, and bookings
   useEffect(() => {
     if (user?.id && profile?.role === 'hotel_owner') {
       loadHotels();
       loadDrivers();
       loadVehicles();
+      loadBookings();
     }
   }, [user?.id, profile?.role]);
 
@@ -467,8 +518,12 @@ export const HotelDashboard: React.FC = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="hotels" className="space-y-6">
+        <Tabs defaultValue="calendar" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Calendar View
+            </TabsTrigger>
             <TabsTrigger value="hotels" className="flex items-center gap-2">
               <Building className="h-4 w-4" />
               Hotels & Rooms
@@ -479,9 +534,31 @@ export const HotelDashboard: React.FC = () => {
             </TabsTrigger>
             <TabsTrigger value="bookings" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
-              Bookings
+              Booking List
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold">Booking Calendar</h2>
+              <p className="text-muted-foreground">View and manage your hotel room bookings in calendar view</p>
+            </div>
+
+            {loadingBookings ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading bookings...</p>
+              </div>
+            ) : (
+              <HotelBookingCalendar
+                bookings={hotelBookings}
+                hotels={hotels}
+                rooms={rooms}
+                onBookingClick={(booking) => console.log('Booking clicked:', booking)}
+                onBookingUpdate={handleBookingAction}
+              />
+            )}
+          </TabsContent>
 
           <TabsContent value="hotels" className="space-y-6">
             <div className="flex justify-between items-center">
@@ -799,184 +876,145 @@ export const HotelDashboard: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Mail className="h-5 w-5" />
-                      New Booking Requests
-                    </CardTitle>
-                    <CardDescription>
-                      Recent reservations from customers
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {hotelBookings.filter(b => b.status === 'pending').length === 0 ? (
-                      <div className="text-center py-8">
-                        <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">No pending booking requests</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {hotelBookings.filter(b => b.status === 'pending').map((booking) => (
-                          <Card key={booking.id}>
-                            <CardContent className="p-4">
-                              <div className="flex justify-between items-start">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4" />
-                                    <span className="font-medium">Customer ID: {booking.customerId}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4" />
-                                    <span className="text-sm">
-                                      Check-in: {new Date(booking.startDate).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4" />
-                                    <span className="text-sm">
-                                      Check-out: {new Date(booking.endDate).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Bed className="h-4 w-4" />
-                                    <span className="text-sm">Trip ID: {booking.tripId}</span>
-                                  </div>
-                                  <p className="text-lg font-semibold text-primary">
-                                    ${booking.totalPrice}
-                                  </p>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button 
-                                    size="sm" 
-                                    onClick={() => handleBookingAction(booking.id, 'confirmed')}
-                                  >
-                                    Confirm
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => handleBookingAction(booking.id, 'rejected')}
-                                  >
-                                    Decline
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Bed className="h-5 w-5" />
-                      Confirmed Reservations
-                    </CardTitle>
-                    <CardDescription>
-                      Your upcoming guests
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {hotelBookings.filter(b => b.status === 'confirmed').length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground">No confirmed reservations</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {hotelBookings.filter(b => b.status === 'confirmed').map((booking) => (
-                          <Card key={booking.id}>
-                            <CardContent className="p-4">
-                              <div className="flex justify-between items-start">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4" />
-                                    <span className="font-medium">Customer ID: {booking.customerId}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4" />
-                                    <span className="text-sm">
-                                      {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                  <p className="text-lg font-semibold text-green-600">
-                                    ${booking.totalPrice}
-                                  </p>
-                                </div>
-                                <Badge variant="default">Confirmed</Badge>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Booking Statistics</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Pending Requests</span>
-                      <span className="font-semibold">
-                        {hotelBookings.filter(b => b.status === 'pending').length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Confirmed Bookings</span>
-                      <span className="font-semibold">
-                        {hotelBookings.filter(b => b.status === 'confirmed').length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Total Revenue</span>
-                      <span className="font-semibold text-primary">
-                        ${hotelBookings
-                          .filter(b => b.status === 'confirmed')
-                          .reduce((sum, b) => sum + b.totalPrice, 0)}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Hotel Statistics</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Total Hotels</span>
-                        <span className="font-semibold">{hotels.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Total Rooms</span>
-                        <span className="font-semibold">
-                          {Object.values(rooms).reduce((sum, hotelRooms) => sum + hotelRooms.length, 0)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Available Rooms</span>
-                        <span className="font-semibold">
-                          {Object.values(rooms).reduce((sum, hotelRooms) => 
-                            sum + hotelRooms.filter(room => room.available).length, 0
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+            <div>
+              <h2 className="text-2xl font-bold mb-2">All Bookings</h2>
+              <p className="text-muted-foreground">Complete list of all your room reservations</p>
             </div>
+
+            {loadingBookings ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading bookings...</p>
+              </div>
+            ) : hotelBookings.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Bed className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No bookings yet</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-3 font-semibold">Status</th>
+                          <th className="text-left p-3 font-semibold">Customer ID</th>
+                          <th className="text-left p-3 font-semibold">Room</th>
+                          <th className="text-left p-3 font-semibold">Check-in</th>
+                          <th className="text-left p-3 font-semibold">Check-out</th>
+                          <th className="text-left p-3 font-semibold">Nights</th>
+                          <th className="text-left p-3 font-semibold">Price</th>
+                          <th className="text-left p-3 font-semibold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {hotelBookings.map((booking) => {
+                          const room = Object.values(rooms).flat().find(r => r.id === booking.hotel_room_id);
+                          const hotel = hotels.find(h => h.id === room?.hotel_id);
+                          const nights = Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24));
+
+                          return (
+                            <tr key={booking.id} className="border-b hover:bg-gray-50">
+                              <td className="p-3">
+                                <Badge
+                                  className={`
+                                    ${booking.status === 'pending' ? 'bg-orange-500' : ''}
+                                    ${booking.status === 'confirmed' ? 'bg-green-500' : ''}
+                                    ${booking.status === 'completed' ? 'bg-indigo-500' : ''}
+                                    ${booking.status === 'cancelled' ? 'bg-red-500' : ''}
+                                  `}
+                                >
+                                  {booking.status}
+                                </Badge>
+                              </td>
+                              <td className="p-3">
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4 text-gray-400" />
+                                  <span className="text-sm font-mono">{booking.customer_id.slice(0, 8)}...</span>
+                                </div>
+                              </td>
+                              <td className="p-3">
+                                <div>
+                                  <div className="font-medium">{room?.type || 'Unknown Room'}</div>
+                                  <div className="text-sm text-gray-500">{hotel?.name || 'Unknown Hotel'}</div>
+                                </div>
+                              </td>
+                              <td className="p-3 text-sm">{new Date(booking.start_date).toLocaleDateString()}</td>
+                              <td className="p-3 text-sm">{new Date(booking.end_date).toLocaleDateString()}</td>
+                              <td className="p-3 text-sm">{nights}</td>
+                              <td className="p-3">
+                                <span className="font-semibold text-green-600">PKR {booking.total_price.toLocaleString()}</span>
+                              </td>
+                              <td className="p-3">
+                                {booking.status === 'pending' ? (
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleBookingAction(booking.id, 'confirmed')}
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
+                                      Confirm
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleBookingAction(booking.id, 'cancelled')}
+                                    >
+                                      Decline
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    disabled
+                                  >
+                                    {booking.status}
+                                  </Button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Summary Stats */}
+                  <div className="mt-6 pt-6 border-t grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {hotelBookings.filter(b => b.status === 'pending').length}
+                      </div>
+                      <div className="text-sm text-gray-600">Pending</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {hotelBookings.filter(b => b.status === 'confirmed').length}
+                      </div>
+                      <div className="text-sm text-gray-600">Confirmed</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-indigo-600">
+                        {hotelBookings.filter(b => b.status === 'completed').length}
+                      </div>
+                      <div className="text-sm text-gray-600">Completed</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        PKR {hotelBookings
+                          .filter(b => b.status === 'confirmed' || b.status === 'completed')
+                          .reduce((sum, b) => sum + (b.total_price || 0), 0).toLocaleString()}
+                      </div>
+                      <div className="text-sm text-gray-600">Total Revenue</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

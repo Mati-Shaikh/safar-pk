@@ -7,30 +7,48 @@ import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { VehicleForm } from '@/components/driver/VehicleForm';
 import { VehicleList } from '@/components/driver/VehicleList';
+import { BookingCalendar } from '@/components/driver/BookingCalendar';
+import '@/components/driver/booking-calendar.css';
 import { Car, Calendar, MapPin, User, Clock, Plus, Settings, Star, Phone, Mail, MapPin as LocationIcon } from 'lucide-react';
 import { Vehicle } from '@/types';
-import { getVehiclesByDriver } from '@/lib/supabase';
+import { getVehiclesByDriver, getVehicleBookingsByDriver, updateBookingStatus } from '@/lib/supabase';
 import Footer from '@/components/layout/Footer';
 
 export const DriverDashboard: React.FC = () => {
   const { bookings, updateBooking } = useData();
   const { user, profile } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [driverBookings, setDriverBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingBookings, setLoadingBookings] = useState(true);
   const [vehicleFormOpen, setVehicleFormOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
 
-  const driverBookings = bookings.filter(booking => 
+  // Legacy bookings from context (keeping for backward compatibility)
+  const contextDriverBookings = bookings.filter(booking =>
     booking.type === 'car' && booking.providerId === user?.id
   );
 
-  const handleBookingAction = (bookingId: string, action: 'confirmed' | 'rejected') => {
-    updateBooking(bookingId, { status: action });
+  const handleBookingAction = async (bookingId: string, action: 'confirmed' | 'cancelled') => {
+    try {
+      const { error } = await updateBookingStatus(bookingId, action);
+      if (error) {
+        console.error('Error updating booking status:', error);
+        alert('Failed to update booking status');
+      } else {
+        // Reload bookings
+        loadBookings();
+        alert(`Booking ${action} successfully!`);
+      }
+    } catch (error) {
+      console.error('Error updating booking:', error);
+      alert('Failed to update booking status');
+    }
   };
 
   const loadVehicles = async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await getVehiclesByDriver(user.id);
@@ -46,8 +64,27 @@ export const DriverDashboard: React.FC = () => {
     }
   };
 
+  const loadBookings = async () => {
+    if (!user?.id) return;
+
+    setLoadingBookings(true);
+    try {
+      const { data, error } = await getVehicleBookingsByDriver(user.id);
+      if (error) {
+        console.error('Error loading bookings:', error);
+      } else {
+        setDriverBookings(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading bookings:', error);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
   useEffect(() => {
     loadVehicles();
+    loadBookings();
   }, [user?.id]);
 
   const handleVehicleEdit = (vehicle: Vehicle) => {
@@ -65,9 +102,14 @@ export const DriverDashboard: React.FC = () => {
   };
 
   const availableVehicles = vehicles.filter(v => v.available);
+
+  // Calculate stats from actual bookings
   const totalEarnings = driverBookings
-    .filter(b => b.status === 'confirmed')
-    .reduce((sum, b) => sum + b.totalPrice, 0);
+    .filter(b => b.status === 'confirmed' || b.status === 'completed')
+    .reduce((sum, b) => sum + (b.total_price || 0), 0);
+
+  const pendingBookings = driverBookings.filter(b => b.status === 'pending').length;
+  const confirmedBookings = driverBookings.filter(b => b.status === 'confirmed').length;
 
   return (
     <>
@@ -159,7 +201,7 @@ export const DriverDashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Pending Requests</p>
-                  <p className="text-2xl font-bold">{driverBookings.filter(b => b.status === 'pending').length}</p>
+                  <p className="text-2xl font-bold">{pendingBookings}</p>
                 </div>
                 <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
                   <Clock className="h-4 w-4 text-yellow-600" />
@@ -172,7 +214,7 @@ export const DriverDashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Confirmed Trips</p>
-                  <p className="text-2xl font-bold">{driverBookings.filter(b => b.status === 'confirmed').length}</p>
+                  <p className="text-2xl font-bold">{confirmedBookings}</p>
                 </div>
                 <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <Car className="h-4 w-4 text-blue-600" />
@@ -196,11 +238,32 @@ export const DriverDashboard: React.FC = () => {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="vehicles" className="space-y-6">
+        <Tabs defaultValue="calendar" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="calendar">Calendar View</TabsTrigger>
             <TabsTrigger value="vehicles">My Vehicles</TabsTrigger>
-            <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="bookings">Booking List</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold">Booking Calendar</h2>
+              <p className="text-muted-foreground">View and manage your bookings in calendar view</p>
+            </div>
+
+            {loadingBookings ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading bookings...</p>
+              </div>
+            ) : (
+              <BookingCalendar
+                bookings={driverBookings}
+                vehicles={vehicles}
+                onBookingClick={(booking) => console.log('Booking clicked:', booking)}
+              />
+            )}
+          </TabsContent>
 
           <TabsContent value="vehicles" className="space-y-6">
             <div className="flex items-center justify-between">
@@ -257,33 +320,33 @@ export const DriverDashboard: React.FC = () => {
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                   <User className="h-4 w-4" />
-                                  <span className="font-medium">Customer ID: {booking.customerId}</span>
+                                  <span className="font-medium">Customer ID: {booking.customer_id}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Calendar className="h-4 w-4" />
                                   <span className="text-sm">
-                                    {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
+                                    {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <MapPin className="h-4 w-4" />
-                                  <span className="text-sm">Trip ID: {booking.tripId}</span>
+                                  <span className="text-sm">Trip ID: {booking.trip_id}</span>
                                 </div>
                                 <p className="text-lg font-semibold text-primary">
-                                  PKR {booking.totalPrice}
+                                  PKR {booking.total_price}
                                 </p>
                               </div>
                               <div className="flex gap-2">
-                                <Button 
-                                  size="sm" 
+                                <Button
+                                  size="sm"
                                   onClick={() => handleBookingAction(booking.id, 'confirmed')}
                                 >
                                   Accept
                                 </Button>
-                                <Button 
-                                  size="sm" 
+                                <Button
+                                  size="sm"
                                   variant="outline"
-                                  onClick={() => handleBookingAction(booking.id, 'rejected')}
+                                  onClick={() => handleBookingAction(booking.id, 'cancelled')}
                                 >
                                   Decline
                                 </Button>
@@ -322,16 +385,16 @@ export const DriverDashboard: React.FC = () => {
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                   <User className="h-4 w-4" />
-                                  <span className="font-medium">Customer ID: {booking.customerId}</span>
+                                  <span className="font-medium">Customer ID: {booking.customer_id}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Calendar className="h-4 w-4" />
                                   <span className="text-sm">
-                                    {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
+                                    {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
                                   </span>
                                 </div>
                                 <p className="text-lg font-semibold text-green-600">
-                                  PKR {booking.totalPrice}
+                                  PKR {booking.total_price}
                                 </p>
                               </div>
                               <Badge variant="default">Confirmed</Badge>

@@ -447,4 +447,314 @@ export const toggleVehicleAvailability = async (vehicleId: string, available: bo
     .select()
     .single()
   return { data, error }
+}
+
+// Booking management functions
+export const createBooking = async (bookingData: {
+  trip_id: string
+  customer_id: string
+  provider_id: string
+  vehicle_id?: string
+  hotel_room_id?: string
+  booking_type: 'vehicle' | 'hotel_room'
+  start_date: string
+  end_date: string
+  total_price: number
+  status?: string
+}) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .insert({
+      ...bookingData,
+      status: bookingData.status || 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .select()
+    .single()
+  return { data, error }
+}
+
+export const createVehicleBooking = async (bookingData: {
+  trip_id: string
+  customer_id: string
+  driver_id: string
+  vehicle_id: string
+  start_date: string
+  end_date: string
+  total_price: number
+}) => {
+  return createBooking({
+    trip_id: bookingData.trip_id,
+    customer_id: bookingData.customer_id,
+    provider_id: bookingData.driver_id,
+    vehicle_id: bookingData.vehicle_id,
+    booking_type: 'vehicle',
+    start_date: bookingData.start_date,
+    end_date: bookingData.end_date,
+    total_price: bookingData.total_price
+  })
+}
+
+export const createRoomBooking = async (bookingData: {
+  trip_id: string
+  customer_id: string
+  hotel_id: string
+  hotel_room_id: string
+  start_date: string
+  end_date: string
+  total_price: number
+}) => {
+  return createBooking({
+    trip_id: bookingData.trip_id,
+    customer_id: bookingData.customer_id,
+    provider_id: bookingData.hotel_id,
+    hotel_room_id: bookingData.hotel_room_id,
+    booking_type: 'hotel_room',
+    start_date: bookingData.start_date,
+    end_date: bookingData.end_date,
+    total_price: bookingData.total_price
+  })
+}
+
+export const getBookingsByTrip = async (tripId: string) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('trip_id', tripId)
+    .order('created_at', { ascending: false })
+  return { data, error }
+}
+
+export const getBookingsByCustomer = async (customerId: string) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('customer_id', customerId)
+    .order('created_at', { ascending: false })
+  return { data, error }
+}
+
+export const getBookingsByProvider = async (providerId: string) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('provider_id', providerId)
+    .order('start_date', { ascending: true })
+  return { data, error }
+}
+
+export const getVehicleBookingsByDriver = async (driverId: string) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('provider_id', driverId)
+    .eq('booking_type', 'vehicle')
+    .order('start_date', { ascending: true })
+  return { data, error }
+}
+
+export const getHotelBookingsByOwner = async (ownerId: string) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('provider_id', ownerId)
+    .eq('booking_type', 'hotel_room')
+    .order('start_date', { ascending: true })
+  return { data, error }
+}
+
+export const updateBookingStatus = async (bookingId: string, status: string) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({
+      status,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', bookingId)
+    .select()
+    .single()
+  return { data, error }
+}
+
+export const deleteBooking = async (bookingId: string) => {
+  const { data, error } = await supabase
+    .from('bookings')
+    .delete()
+    .eq('id', bookingId)
+  return { data, error }
+}
+
+// Helper function to get vehicle driver/owner ID
+export const getVehicleOwnerId = async (vehicleId: string) => {
+  const { data, error } = await supabase
+    .from('vehicles')
+    .select('driver_id')
+    .eq('id', vehicleId)
+    .single()
+
+  if (error) {
+    console.error('Error fetching vehicle owner:', error)
+    return { data: null, error }
+  }
+
+  return { data: data?.driver_id || null, error: null }
+}
+
+// Helper function to get hotel owner ID
+export const getHotelOwnerId = async (hotelId: string) => {
+  const { data, error } = await supabase
+    .from('hotels')
+    .select('owner_id')
+    .eq('id', hotelId)
+    .single()
+
+  if (error) {
+    console.error('Error fetching hotel owner:', error)
+    return { data: null, error }
+  }
+
+  return { data: data?.owner_id || null, error: null }
+}
+
+// Helper function to get hotel owner ID from room ID
+export const getHotelOwnerIdFromRoom = async (roomId: string) => {
+  const { data, error } = await supabase
+    .from('hotel_rooms')
+    .select('hotel_id, hotels(owner_id)')
+    .eq('id', roomId)
+    .single()
+
+  if (error) {
+    console.error('Error fetching hotel owner from room:', error)
+    return { data: null, error }
+  }
+
+  // Extract owner_id from nested hotels object
+  const ownerId = (data as any)?.hotels?.owner_id || null
+  return { data: ownerId, error: null }
+}
+
+// Helper function to create multiple bookings from trip itinerary
+export const createBookingsFromItinerary = async (
+  tripId: string,
+  customerId: string,
+  itinerary: any[]
+) => {
+  const bookings = []
+  const errors = []
+
+  for (const day of itinerary) {
+    const dayDate = day.date
+
+    for (const slot of day.slots) {
+      // Create vehicle booking if transport is needed
+      if (slot.transportNeeded && slot.selectedCar?.id) {
+        try {
+          // Get vehicle owner ID
+          const { data: driverId, error: driverError } = await getVehicleOwnerId(slot.selectedCar.id)
+
+          if (driverError || !driverId) {
+            errors.push({
+              type: 'vehicle',
+              slot: slot.id,
+              error: 'Failed to get vehicle owner ID'
+            })
+            continue
+          }
+
+          // Parse price from string like "PKR 8,000"
+          const priceMatch = slot.selectedCar.pricePerDay.match(/[\d,]+/)
+          const pricePerDay = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0
+
+          // Create vehicle booking
+          const { data, error } = await createBooking({
+            trip_id: tripId,
+            customer_id: customerId,
+            provider_id: driverId,
+            vehicle_id: slot.selectedCar.id,
+            booking_type: 'vehicle',
+            start_date: `${dayDate}T${slot.startTime}:00`,
+            end_date: `${dayDate}T${slot.endTime}:00`,
+            total_price: pricePerDay,
+            status: 'pending'
+          })
+
+          if (error) {
+            errors.push({
+              type: 'vehicle',
+              slot: slot.id,
+              error: error.message
+            })
+          } else {
+            bookings.push(data)
+          }
+        } catch (err) {
+          console.error('Error creating vehicle booking:', err)
+          errors.push({
+            type: 'vehicle',
+            slot: slot.id,
+            error: 'Unexpected error creating vehicle booking'
+          })
+        }
+      }
+
+      // Create hotel room booking if hotel is needed
+      if (slot.hotelRoomNeeded && slot.selectedRoom?.id) {
+        try {
+          // Get hotel owner ID from room
+          const { data: hotelOwnerId, error: ownerError } = await getHotelOwnerIdFromRoom(slot.selectedRoom.id)
+
+          if (ownerError || !hotelOwnerId) {
+            errors.push({
+              type: 'hotel',
+              slot: slot.id,
+              error: 'Failed to get hotel owner ID'
+            })
+            continue
+          }
+
+          // Parse price from string like "PKR 25,000"
+          const priceMatch = slot.selectedRoom.price.match(/[\d,]+/)
+          const pricePerNight = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0
+
+          // Hotel bookings typically span overnight, so we use the full day
+          const { data, error } = await createBooking({
+            trip_id: tripId,
+            customer_id: customerId,
+            provider_id: hotelOwnerId,
+            hotel_room_id: slot.selectedRoom.id,
+            booking_type: 'hotel_room',
+            start_date: `${dayDate}T${slot.startTime}:00`,
+            end_date: `${dayDate}T23:59:59`, // End of day for hotel bookings
+            total_price: pricePerNight,
+            status: 'pending'
+          })
+
+          if (error) {
+            errors.push({
+              type: 'hotel',
+              slot: slot.id,
+              error: error.message
+            })
+          } else {
+            bookings.push(data)
+          }
+        } catch (err) {
+          console.error('Error creating hotel booking:', err)
+          errors.push({
+            type: 'hotel',
+            slot: slot.id,
+            error: 'Unexpected error creating hotel booking'
+          })
+        }
+      }
+    }
+  }
+
+  return {
+    bookings,
+    errors,
+    success: errors.length === 0
+  }
 } 

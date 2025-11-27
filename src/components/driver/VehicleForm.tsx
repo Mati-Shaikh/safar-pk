@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Car, X, Plus, Trash2 } from 'lucide-react';
 import { Vehicle } from '@/types';
 import { createVehicle, updateVehicle } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from '../hotel/ImageUpload';
 
 interface VehicleFormProps {
   isOpen: boolean;
@@ -33,7 +35,7 @@ const vehicleTypes = [
   'Motorcycle'
 ];
 
-const commonFeatures = [
+const AVAILABLE_FEATURES = [
   'Air Conditioning',
   'GPS Navigation',
   'Bluetooth',
@@ -45,9 +47,19 @@ const commonFeatures = [
   'Cruise Control',
   'Automatic Transmission',
   'Manual Transmission',
-  '4WD',
-  'Child Seat',
-  'Pet Friendly'
+  '4WD/AWD',
+  'Child Seat Available',
+  'Pet Friendly',
+  'Heated Seats',
+  'Apple CarPlay',
+  'Android Auto',
+  'Parking Sensors',
+  'Lane Assist',
+  'Adaptive Cruise Control',
+  'Keyless Entry',
+  'Push Start',
+  'Roof Rack',
+  'Tinted Windows'
 ];
 
 export const VehicleForm: React.FC<VehicleFormProps> = ({
@@ -70,8 +82,6 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
     available: true
   });
 
-  const [newFeature, setNewFeature] = useState('');
-  const [newImageUrl, setNewImageUrl] = useState('');
 
   useEffect(() => {
     if (vehicle) {
@@ -144,38 +154,17 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
     }
   };
 
-  const addFeature = () => {
-    if (newFeature.trim() && !formData.features.includes(newFeature.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        features: [...prev.features, newFeature.trim()]
-      }));
-      setNewFeature('');
-    }
-  };
-
-  const removeFeature = (feature: string) => {
+  const toggleFeature = (feature: string) => {
     setFormData(prev => ({
       ...prev,
-      features: prev.features.filter(f => f !== feature)
+      features: prev.features.includes(feature)
+        ? prev.features.filter(f => f !== feature)
+        : [...prev.features, feature]
     }));
   };
 
-  const addImage = () => {
-    if (newImageUrl.trim() && !formData.images.includes(newImageUrl.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, newImageUrl.trim()]
-      }));
-      setNewImageUrl('');
-    }
-  };
-
-  const removeImage = (imageUrl: string) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter(img => img !== imageUrl)
-    }));
+  const handleImagesChange = (images: string[]) => {
+    setFormData(prev => ({ ...prev, images }));
   };
 
   return (
@@ -184,7 +173,7 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Car className="h-5 w-5" />
-            {vehicle ? 'Edit Vehicle' : 'Add New Vehicles'}
+            {vehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
           </DialogTitle>
           <DialogDescription>
             {vehicle ? 'Update your vehicle information' : 'Add a new vehicle to your fleet'}
@@ -270,97 +259,42 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
           </div>
 
           <div className="space-y-4">
-            <Label>Features</Label>
-            <div className="flex gap-2">
-              <Input
-                value={newFeature}
-                onChange={(e) => setNewFeature(e.target.value)}
-                placeholder="Add a feature"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
-              />
-              <Button type="button" onClick={addFeature} size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              {formData.features.map((feature) => (
-                <Badge key={feature} variant="secondary" className="flex items-center gap-1">
-                  {feature}
-                  <button
-                    type="button"
-                    onClick={() => removeFeature(feature)}
-                    className="ml-1 hover:text-red-500"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-
-            <div className="text-sm text-muted-foreground">
-              Quick add:
-              <div className="flex flex-wrap gap-1 mt-1">
-                {commonFeatures.map((feature) => (
-                  <button
-                    key={feature}
-                    type="button"
-                    onClick={() => {
-                      if (!formData.features.includes(feature)) {
-                        setFormData(prev => ({
-                          ...prev,
-                          features: [...prev.features, feature]
-                        }));
-                      }
-                    }}
-                    className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-md"
-                    disabled={formData.features.includes(feature)}
+            <Label>Vehicle Features</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-md max-h-60 overflow-y-auto">
+              {AVAILABLE_FEATURES.map((feature) => (
+                <div key={feature} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={feature}
+                    checked={formData.features.includes(feature)}
+                    onCheckedChange={() => toggleFeature(feature)}
+                  />
+                  <Label
+                    htmlFor={feature}
+                    className="text-sm font-normal cursor-pointer"
                   >
                     {feature}
-                  </button>
-                ))}
-              </div>
+                  </Label>
+                </div>
+              ))}
             </div>
-          </div>
-
-          <div className="space-y-4">
-            <Label>Images</Label>
-            <div className="flex gap-2">
-              <Input
-                value={newImageUrl}
-                onChange={(e) => setNewImageUrl(e.target.value)}
-                placeholder="Image URL"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImage())}
-              />
-              <Button type="button" onClick={addImage} size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {formData.images.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {formData.images.map((imageUrl, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={imageUrl}
-                      alt={`Vehicle ${index + 1}`}
-                      className="w-full h-20 object-cover rounded-md"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder.svg';
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(imageUrl)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
+            {formData.features.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                <p className="text-sm text-muted-foreground w-full">Selected features:</p>
+                {formData.features.map((feature, index) => (
+                  <Badge key={index} variant="secondary">
+                    {feature}
+                  </Badge>
                 ))}
               </div>
             )}
           </div>
+
+          <ImageUpload
+            images={formData.images}
+            onImagesChange={handleImagesChange}
+            maxImages={10}
+            label="Vehicle Images"
+          />
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
