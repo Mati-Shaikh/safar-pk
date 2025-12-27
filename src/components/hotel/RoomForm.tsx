@@ -8,8 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Bed } from 'lucide-react';
-import { HotelRoom } from '@/types';
+import { HotelRoom, HotelRoomPricing } from '@/types';
 import { ImageUpload } from './ImageUpload';
+import { PricingConfiguration } from '@/components/ui/PricingConfiguration';
 
 interface RoomFormProps {
   room?: HotelRoom;
@@ -22,9 +23,10 @@ interface RoomFormProps {
     amenities: string[];
     images: string[];
     available: boolean;
-  }) => void;
+  }, pricingData?: Partial<HotelRoomPricing>) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  existingPricing?: HotelRoomPricing | null;
 }
 
 const AVAILABLE_AMENITIES = [
@@ -53,7 +55,8 @@ export const RoomForm: React.FC<RoomFormProps> = ({
   room,
   onSubmit,
   onCancel,
-  isLoading = false
+  isLoading = false,
+  existingPricing
 }) => {
   const [formData, setFormData] = useState({
     type: room?.type || '',
@@ -64,6 +67,8 @@ export const RoomForm: React.FC<RoomFormProps> = ({
     images: room?.images || [],
     available: room?.available ?? true
   });
+
+  const [pricingData, setPricingData] = useState<Partial<HotelRoomPricing> | undefined>(undefined);
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -82,15 +87,23 @@ export const RoomForm: React.FC<RoomFormProps> = ({
     setFormData(prev => ({ ...prev, images }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (formData.type.trim() && formData.price_per_night.trim() && formData.capacity > 0) {
-      onSubmit(formData);
+      // Only pass pricing data if it has been configured
+      const hasPricingConfig = pricingData && (
+        (pricingData.off_season_months && pricingData.off_season_months.length > 0) ||
+        (pricingData.on_season_months && pricingData.on_season_months.length > 0) ||
+        (pricingData.closed_months && pricingData.closed_months.length > 0)
+      );
+      onSubmit(formData, hasPricingConfig ? pricingData : undefined);
     }
   };
 
+  const isFormValid = formData.type.trim() && formData.price_per_night.trim() && formData.capacity > 0;
+
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <div className="space-y-6">
+      <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bed className="h-5 w-5" />
@@ -101,7 +114,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="type">Room Type *</Label>
@@ -205,17 +218,31 @@ export const RoomForm: React.FC<RoomFormProps> = ({
             />
             <Label htmlFor="available">Room Available</Label>
           </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" disabled={isLoading || !formData.type.trim() || !formData.price_per_night.trim() || formData.capacity <= 0}>
-              {isLoading ? 'Saving...' : (room ? 'Update Room' : 'Create Room')}
-            </Button>
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          </div>
-        </form>
+        </div>
       </CardContent>
     </Card>
+
+      {/* Pricing Configuration */}
+      <div className="w-full max-w-2xl mx-auto">
+        <PricingConfiguration
+          pricing={existingPricing}
+          priceLabel="per night"
+          onChange={setPricingData}
+        />
+      </div>
+
+      {/* Submit buttons at the end */}
+      <div className="w-full max-w-2xl mx-auto flex gap-2 pt-4">
+        <Button 
+          onClick={handleSubmit}
+          disabled={isLoading || !isFormValid}
+        >
+          {isLoading ? 'Saving...' : (room ? 'Update Room' : 'Create Room')}
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </div>
   );
 };

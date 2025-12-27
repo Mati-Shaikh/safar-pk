@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Building, Edit, Trash2, Plus, Bed, Star, MapPin, Wifi, Car, Coffee, Dumbbell, Waves, Utensils } from 'lucide-react';
-import { Hotel, HotelRoom } from '@/types';
+import { Hotel, HotelRoom, HotelRoomPricing } from '@/types';
 import { HotelForm } from './HotelForm';
 import { RoomForm } from './RoomForm';
+import { getRoomPricing, createOrUpdateRoomPricing } from '@/lib/supabase';
 
 interface HotelListProps {
   hotels: Hotel[];
@@ -15,8 +16,8 @@ interface HotelListProps {
   onCreateHotel: (hotelData: any) => void;
   onUpdateHotel: (hotelId: string, hotelData: any) => void;
   onDeleteHotel: (hotelId: string) => void;
-  onCreateRoom: (hotelId: string, roomData: any) => void;
-  onUpdateRoom: (roomId: string, roomData: any) => void;
+  onCreateRoom: (hotelId: string, roomData: any, pricingData?: Partial<HotelRoomPricing>) => void;
+  onUpdateRoom: (roomId: string, roomData: any, pricingData?: Partial<HotelRoomPricing>) => void;
   onDeleteRoom: (roomId: string) => void;
   isLoading?: boolean;
 }
@@ -44,6 +45,18 @@ export const HotelList: React.FC<HotelListProps> = ({
   const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
   const [editingRoom, setEditingRoom] = useState<HotelRoom | null>(null);
   const [creatingRoomForHotel, setCreatingRoomForHotel] = useState<string | null>(null);
+  const [roomPricing, setRoomPricing] = useState<{ [roomId: string]: HotelRoomPricing | null }>({});
+
+  // Load pricing when editing a room
+  useEffect(() => {
+    if (editingRoom) {
+      const loadPricing = async () => {
+        const { data } = await getRoomPricing(editingRoom.id);
+        setRoomPricing(prev => ({ ...prev, [editingRoom.id]: data }));
+      };
+      loadPricing();
+    }
+  }, [editingRoom]);
 
   const handleCreateHotel = (hotelData: any) => {
     onCreateHotel(hotelData);
@@ -57,16 +70,16 @@ export const HotelList: React.FC<HotelListProps> = ({
     }
   };
 
-  const handleCreateRoom = (roomData: any) => {
+  const handleCreateRoom = (roomData: any, pricingData?: Partial<HotelRoomPricing>) => {
     if (creatingRoomForHotel) {
-      onCreateRoom(creatingRoomForHotel, roomData);
+      onCreateRoom(creatingRoomForHotel, roomData, pricingData);
       setCreatingRoomForHotel(null);
     }
   };
 
-  const handleUpdateRoom = (roomData: any) => {
+  const handleUpdateRoom = (roomData: any, pricingData?: Partial<HotelRoomPricing>) => {
     if (editingRoom) {
-      onUpdateRoom(editingRoom.id, roomData);
+      onUpdateRoom(editingRoom.id, roomData, pricingData);
       setEditingRoom(null);
     }
   };
@@ -228,6 +241,7 @@ export const HotelList: React.FC<HotelListProps> = ({
                         onSubmit={handleCreateRoom}
                         onCancel={() => setCreatingRoomForHotel(null)}
                         isLoading={isLoading}
+                        existingPricing={null}
                       />
                     </DialogContent>
                   </Dialog>
@@ -262,6 +276,7 @@ export const HotelList: React.FC<HotelListProps> = ({
                                     onSubmit={handleUpdateRoom}
                                     onCancel={() => setEditingRoom(null)}
                                     isLoading={isLoading}
+                                    existingPricing={roomPricing[room.id] || null}
                                   />
                                 </DialogContent>
                               </Dialog>

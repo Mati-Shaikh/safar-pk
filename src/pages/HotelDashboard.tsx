@@ -28,7 +28,8 @@ import {
   updateHotelRoom,
   deleteHotelRoom,
   getHotelBookingsByOwner,
-  updateBookingStatus
+  updateBookingStatus,
+  createOrUpdateRoomPricing
 } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -251,7 +252,7 @@ export const HotelDashboard: React.FC = () => {
     }
   };
 
-  const handleCreateRoom = async (hotelId: string, roomData: any) => {
+  const handleCreateRoom = async (hotelId: string, roomData: any, pricingData?: any) => {
     setIsLoading(true);
     try {
       const { data, error } = await createHotelRoom({
@@ -260,13 +261,21 @@ export const HotelDashboard: React.FC = () => {
       });
       if (error) throw error;
 
+      // Save pricing if provided
+      if (pricingData && data?.id) {
+        await createOrUpdateRoomPricing({
+          room_id: data.id,
+          ...pricingData
+        });
+      }
+
       setRooms(prev => ({
         ...prev,
         [hotelId]: [data, ...(prev[hotelId] || [])]
       }));
       toast({
         title: "Success",
-        description: "Room created successfully",
+        description: "Room created successfully with pricing configuration",
       });
     } catch (error) {
       console.error('Error creating room:', error);
@@ -280,11 +289,19 @@ export const HotelDashboard: React.FC = () => {
     }
   };
 
-  const handleUpdateRoom = async (roomId: string, roomData: any) => {
+  const handleUpdateRoom = async (roomId: string, roomData: any, pricingData?: any) => {
     setIsLoading(true);
     try {
       const { data, error } = await updateHotelRoom(roomId, roomData);
       if (error) throw error;
+
+      // Update pricing if provided
+      if (pricingData) {
+        await createOrUpdateRoomPricing({
+          room_id: roomId,
+          ...pricingData
+        });
+      }
 
       setRooms(prev => {
         const newRooms = { ...prev };
@@ -295,7 +312,7 @@ export const HotelDashboard: React.FC = () => {
       });
       toast({
         title: "Success",
-        description: "Room updated successfully",
+        description: "Room updated successfully with pricing configuration",
       });
     } catch (error) {
       console.error('Error updating room:', error);

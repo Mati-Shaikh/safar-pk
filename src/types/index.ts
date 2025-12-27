@@ -143,3 +143,34 @@ export interface Vehicle {
   created_at: string;
   updated_at: string;
 }
+
+// Pricing interfaces for vendors
+export interface HotelRoomPricing {
+  id: string;
+  room_id: string;
+  off_season_months: number[];
+  off_season_price: number | null;
+  on_season_months: number[];
+  on_season_price: number | null;
+  closed_months: number[];
+  last_minute_enabled: boolean;
+  last_minute_days_before: number | null;
+  last_minute_discount_price: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VehiclePricing {
+  id: string;
+  vehicle_id: string;
+  off_season_months: number[];
+  off_season_price: number | null;
+  on_season_months: number[];
+  on_season_price: number | null;
+  closed_months: number[];
+  last_minute_enabled: boolean;
+  last_minute_days_before: number | null;
+  last_minute_discount_price: number | null;
+  created_at: string;
+  updated_at: string;
+}

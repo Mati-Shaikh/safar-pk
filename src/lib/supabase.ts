@@ -663,9 +663,15 @@ export const createBookingsFromItinerary = async (
             continue
           }
 
-          // Parse price from string like "PKR 8,000"
+          // Get dynamic price based on booking date
+          const { data: dynamicPrice } = await getVehicleCurrentPrice(slot.selectedCar.id, dayDate);
+          
+          // Parse fallback price from string like "PKR 8,000"
           const priceMatch = slot.selectedCar.pricePerDay.match(/[\d,]+/)
-          const pricePerDay = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0
+          const fallbackPrice = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0
+          
+          // Use dynamic price if available, otherwise use fallback
+          const pricePerDay = dynamicPrice !== null ? dynamicPrice : fallbackPrice
 
           // Create vehicle booking
           const { data, error } = await createBooking({
@@ -714,9 +720,15 @@ export const createBookingsFromItinerary = async (
             continue
           }
 
-          // Parse price from string like "PKR 25,000"
+          // Get dynamic price based on booking date
+          const { data: dynamicPrice } = await getRoomCurrentPrice(slot.selectedRoom.id, dayDate);
+          
+          // Parse fallback price from string like "PKR 25,000"
           const priceMatch = slot.selectedRoom.price.match(/[\d,]+/)
-          const pricePerNight = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0
+          const fallbackPrice = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0
+          
+          // Use dynamic price if available, otherwise use fallback
+          const pricePerNight = dynamicPrice !== null ? dynamicPrice : fallbackPrice
 
           // Hotel bookings typically span overnight, so we use the full day
           const { data, error } = await createBooking({
@@ -757,4 +769,232 @@ export const createBookingsFromItinerary = async (
     errors,
     success: errors.length === 0
   }
-} 
+}
+
+// =============================================
+// PRICING FUNCTIONS
+// =============================================
+
+// Hotel Room Pricing Functions
+export const createOrUpdateRoomPricing = async (pricingData: {
+  room_id: string;
+  off_season_months?: number[];
+  off_season_price?: number | null;
+  on_season_months?: number[];
+  on_season_price?: number | null;
+  closed_months?: number[];
+  last_minute_enabled?: boolean;
+  last_minute_days_before?: number | null;
+  last_minute_discount_price?: number | null;
+}) => {
+  try {
+    // Check if pricing already exists
+    const { data: existing } = await supabase
+      .from('hotel_room_pricing')
+      .select('id')
+      .eq('room_id', pricingData.room_id)
+      .single();
+
+    if (existing) {
+      // Update existing pricing
+      const { data, error } = await supabase
+        .from('hotel_room_pricing')
+        .update({
+          off_season_months: pricingData.off_season_months || [],
+          off_season_price: pricingData.off_season_price,
+          on_season_months: pricingData.on_season_months || [],
+          on_season_price: pricingData.on_season_price,
+          closed_months: pricingData.closed_months || [],
+          last_minute_enabled: pricingData.last_minute_enabled || false,
+          last_minute_days_before: pricingData.last_minute_days_before,
+          last_minute_discount_price: pricingData.last_minute_discount_price,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      return { data, error };
+    } else {
+      // Create new pricing
+      const { data, error } = await supabase
+        .from('hotel_room_pricing')
+        .insert({
+          room_id: pricingData.room_id,
+          off_season_months: pricingData.off_season_months || [],
+          off_season_price: pricingData.off_season_price,
+          on_season_months: pricingData.on_season_months || [],
+          on_season_price: pricingData.on_season_price,
+          closed_months: pricingData.closed_months || [],
+          last_minute_enabled: pricingData.last_minute_enabled || false,
+          last_minute_days_before: pricingData.last_minute_days_before,
+          last_minute_discount_price: pricingData.last_minute_discount_price
+        })
+        .select()
+        .single();
+
+      return { data, error };
+    }
+  } catch (error) {
+    console.error('Error creating/updating room pricing:', error);
+    return { data: null, error };
+  }
+};
+
+export const getRoomPricing = async (roomId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('hotel_room_pricing')
+      .select('*')
+      .eq('room_id', roomId)
+      .single();
+
+    return { data, error };
+  } catch (error) {
+    console.error('Error fetching room pricing:', error);
+    return { data: null, error };
+  }
+};
+
+export const deleteRoomPricing = async (roomId: string) => {
+  try {
+    const { error } = await supabase
+      .from('hotel_room_pricing')
+      .delete()
+      .eq('room_id', roomId);
+
+    return { error };
+  } catch (error) {
+    console.error('Error deleting room pricing:', error);
+    return { error };
+  }
+};
+
+// Vehicle Pricing Functions
+export const createOrUpdateVehiclePricing = async (pricingData: {
+  vehicle_id: string;
+  off_season_months?: number[];
+  off_season_price?: number | null;
+  on_season_months?: number[];
+  on_season_price?: number | null;
+  closed_months?: number[];
+  last_minute_enabled?: boolean;
+  last_minute_days_before?: number | null;
+  last_minute_discount_price?: number | null;
+}) => {
+  try {
+    // Check if pricing already exists
+    const { data: existing } = await supabase
+      .from('vehicle_pricing')
+      .select('id')
+      .eq('vehicle_id', pricingData.vehicle_id)
+      .single();
+
+    if (existing) {
+      // Update existing pricing
+      const { data, error } = await supabase
+        .from('vehicle_pricing')
+        .update({
+          off_season_months: pricingData.off_season_months || [],
+          off_season_price: pricingData.off_season_price,
+          on_season_months: pricingData.on_season_months || [],
+          on_season_price: pricingData.on_season_price,
+          closed_months: pricingData.closed_months || [],
+          last_minute_enabled: pricingData.last_minute_enabled || false,
+          last_minute_days_before: pricingData.last_minute_days_before,
+          last_minute_discount_price: pricingData.last_minute_discount_price,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      return { data, error };
+    } else {
+      // Create new pricing
+      const { data, error } = await supabase
+        .from('vehicle_pricing')
+        .insert({
+          vehicle_id: pricingData.vehicle_id,
+          off_season_months: pricingData.off_season_months || [],
+          off_season_price: pricingData.off_season_price,
+          on_season_months: pricingData.on_season_months || [],
+          on_season_price: pricingData.on_season_price,
+          closed_months: pricingData.closed_months || [],
+          last_minute_enabled: pricingData.last_minute_enabled || false,
+          last_minute_days_before: pricingData.last_minute_days_before,
+          last_minute_discount_price: pricingData.last_minute_discount_price
+        })
+        .select()
+        .single();
+
+      return { data, error };
+    }
+  } catch (error) {
+    console.error('Error creating/updating vehicle pricing:', error);
+    return { data: null, error };
+  }
+};
+
+export const getVehiclePricing = async (vehicleId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('vehicle_pricing')
+      .select('*')
+      .eq('vehicle_id', vehicleId)
+      .single();
+
+    return { data, error };
+  } catch (error) {
+    console.error('Error fetching vehicle pricing:', error);
+    return { data: null, error };
+  }
+};
+
+export const deleteVehiclePricing = async (vehicleId: string) => {
+  try {
+    const { error } = await supabase
+      .from('vehicle_pricing')
+      .delete()
+      .eq('vehicle_id', vehicleId);
+
+    return { error };
+  } catch (error) {
+    console.error('Error deleting vehicle pricing:', error);
+    return { error };
+  }
+};
+
+// Get current price for a room based on date
+export const getRoomCurrentPrice = async (roomId: string, bookingDate?: string) => {
+  try {
+    const date = bookingDate || new Date().toISOString().split('T')[0];
+    const { data, error } = await supabase
+      .rpc('get_room_current_price', {
+        p_room_id: roomId,
+        p_booking_date: date
+      });
+
+    return { data, error };
+  } catch (error) {
+    console.error('Error fetching room current price:', error);
+    return { data: null, error };
+  }
+};
+
+// Get current price for a vehicle based on date
+export const getVehicleCurrentPrice = async (vehicleId: string, bookingDate?: string) => {
+  try {
+    const date = bookingDate || new Date().toISOString().split('T')[0];
+    const { data, error } = await supabase
+      .rpc('get_vehicle_current_price', {
+        p_vehicle_id: vehicleId,
+        p_booking_date: date
+      });
+
+    return { data, error };
+  } catch (error) {
+    console.error('Error fetching vehicle current price:', error);
+    return { data: null, error };
+  }
+};

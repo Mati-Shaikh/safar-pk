@@ -10,10 +10,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Car, X, Plus, Trash2 } from 'lucide-react';
-import { Vehicle } from '@/types';
-import { createVehicle, updateVehicle } from '@/lib/supabase';
+import { Vehicle, VehiclePricing } from '@/types';
+import { createVehicle, updateVehicle, createOrUpdateVehiclePricing, getVehiclePricing } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '../hotel/ImageUpload';
+import { PricingConfiguration } from '@/components/ui/PricingConfiguration';
 
 interface VehicleFormProps {
   isOpen: boolean;
@@ -81,6 +82,9 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
     images: [] as string[],
     available: true
   });
+  
+  const [pricingData, setPricingData] = useState<Partial<VehiclePricing> | undefined>(undefined);
+  const [existingPricing, setExistingPricing] = useState<VehiclePricing | null>(null);
 
 
   useEffect(() => {
@@ -95,6 +99,15 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
         images: vehicle.images,
         available: vehicle.available
       });
+      
+      // Load existing pricing if editing
+      const loadPricing = async () => {
+        const { data } = await getVehiclePricing(vehicle.id);
+        if (data) {
+          setExistingPricing(data);
+        }
+      };
+      loadPricing();
     } else {
       setFormData({
         name: '',
@@ -106,6 +119,7 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
         images: [],
         available: true
       });
+      setExistingPricing(null);
     }
   }, [vehicle, isOpen]);
 
@@ -126,17 +140,29 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
         available: formData.available
       };
 
+      let vehicleId: string;
+      
       if (vehicle) {
         await updateVehicle(vehicle.id, vehicleData);
+        vehicleId = vehicle.id;
         toast({
           title: "Vehicle Updated",
           description: "Vehicle information has been updated successfully.",
         });
       } else {
-        await createVehicle(vehicleData);
+        const result = await createVehicle(vehicleData);
+        vehicleId = result.data?.id;
         toast({
           title: "Vehicle Added",
           description: "New vehicle has been added to your fleet.",
+        });
+      }
+      
+      // Save pricing if configured
+      if (pricingData && vehicleId) {
+        await createOrUpdateVehiclePricing({
+          vehicle_id: vehicleId,
+          ...pricingData
         });
       }
 
@@ -295,6 +321,16 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
             maxImages={10}
             label="Vehicle Images"
           />
+          
+          {/* Pricing Configuration Section */}
+          <div className="pt-4 border-t">
+            <h3 className="text-lg font-semibold mb-4">Dynamic Pricing</h3>
+            <PricingConfiguration
+              pricing={existingPricing}
+              priceLabel="per day"
+              onChange={setPricingData}
+            />
+          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
