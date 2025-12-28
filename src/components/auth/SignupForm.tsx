@@ -28,6 +28,11 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Terms and Conditions text - stored as variable
+  const TERMS_TEXT = "By creating an account, you agree to our";
+  const TERMS_LINK_TEXT = "Terms & Conditions";
+  const TERMS_LINK_URL = "/customer/terms-and-conditions";
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.name === 'email'
       ? e.target.value.toLowerCase()
@@ -230,6 +235,21 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
           >
             {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
+
+          {/* Terms and Conditions Agreement */}
+          <div className="text-center pt-2">
+            <p className="text-xs text-gray-500">
+              {TERMS_TEXT}{' '}
+              <a
+                href={TERMS_LINK_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline font-medium"
+              >
+                {TERMS_LINK_TEXT}
+              </a>
+            </p>
+          </div>
 
           <div className="text-center pt-4 space-y-2">
             <p className="text-sm text-gray-600">

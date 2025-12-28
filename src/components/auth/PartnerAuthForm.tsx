@@ -16,6 +16,11 @@ export default function PartnerAuthForm() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'signup'>('signup');
 
+  // Terms and Conditions text - stored as variables
+  const TERMS_TEXT = "By creating an account, you agree to our";
+  const TERMS_LINK_TEXT = "Terms & Conditions";
+  const TERMS_LINK_URL = "/partner/terms-and-conditions";
+
   // Signup state
   const [signupData, setSignupData] = useState({
     email: '',
@@ -340,6 +345,21 @@ export default function PartnerAuthForm() {
               >
                 {loading ? 'Creating Account...' : 'Register as Partner'}
               </Button>
+
+              {/* Terms and Conditions Agreement */}
+              <div className="text-center pt-2">
+                <p className="text-xs text-gray-500">
+                  {TERMS_TEXT}{' '}
+                  <a
+                    href={TERMS_LINK_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-600 hover:text-green-800 underline font-medium"
+                  >
+                    {TERMS_LINK_TEXT}
+                  </a>
+                </p>
+              </div>
 
               <div className="text-center pt-4 space-y-2">
                 <p className="text-sm text-gray-600">

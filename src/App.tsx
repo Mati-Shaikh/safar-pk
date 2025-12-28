@@ -16,6 +16,8 @@ import { DriverDashboard } from "./pages/DriverDashboard";
 import { HotelDashboard } from "./pages/HotelDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { ComingSoon } from "./pages/ComingSoon";
+import CustomerTerms from "./pages/CustomerTerms";
+import PartnerTerms from "./pages/PartnerTerm";
 import { UserRole } from "./lib/supabase";
 
 const queryClient = new QueryClient();
@@ -44,6 +46,10 @@ const AppContent = () => {
         <Route path="/trip" element={<TripPage />} />
         <Route path="/map" element={<Map />} />
         <Route path="/partner" element={<Partner />} />
+        
+        {/* Terms & Conditions */}
+        <Route path="/customer/terms-and-conditions" element={<CustomerTerms />} />
+        <Route path="/partner/terms-and-conditions" element={<PartnerTerms />} />
 
         {/* Dashboard route - always available, handles auth internally */}
         <Route path="/dashboard" element={getDashboard()} />
