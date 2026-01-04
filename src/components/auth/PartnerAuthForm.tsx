@@ -198,8 +198,8 @@ export default function PartnerAuthForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4 overflow-y-auto">
+      <Card className="w-full max-w-md my-8">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
             <Briefcase className="h-6 w-6" />

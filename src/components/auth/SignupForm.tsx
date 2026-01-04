@@ -102,7 +102,7 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
 
   return (
     <>
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full max-w-md mx-auto my-4">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
           <UserPlus className="h-6 w-6" />
