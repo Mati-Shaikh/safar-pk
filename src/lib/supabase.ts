@@ -58,35 +58,38 @@ export const customSignUp = async (email: string, password: string, userData: {
   try {
     console.log('Starting custom signup for:', email || userData.phone_number)
 
-    // Check if user already exists by email or phone
+    // Check if user already exists with the same email AND role combination
     if (email) {
-      const { data: existingUserByEmail } = await supabase
+      const { data: existingUserByEmailAndRole } = await supabase
         .from('user_profiles')
-        .select('email')
+        .select('email, role')
         .eq('email', email)
+        .eq('role', userData.role)
         .single()
 
-      if (existingUserByEmail) {
-        console.log('User with this email already exists')
+      if (existingUserByEmailAndRole) {
+        console.log('User with this email and role already exists')
         return {
           data: null,
-          error: { message: 'User with this email already exists' }
+          error: { message: `An account with this email already exists for ${userData.role} role` }
         }
       }
     }
 
+    // Check if user already exists with the same phone number AND role combination
     if (userData.phone_number) {
-      const { data: existingUserByPhone } = await supabase
+      const { data: existingUserByPhoneAndRole } = await supabase
         .from('user_profiles')
-        .select('phone_number')
+        .select('phone_number, role')
         .eq('phone_number', userData.phone_number)
+        .eq('role', userData.role)
         .single()
 
-      if (existingUserByPhone) {
-        console.log('User with this phone number already exists')
+      if (existingUserByPhoneAndRole) {
+        console.log('User with this phone number and role already exists')
         return {
           data: null,
-          error: { message: 'User with this phone number already exists' }
+          error: { message: `An account with this phone number already exists for ${userData.role} role` }
         }
       }
     }
@@ -136,9 +139,9 @@ export const customSignUp = async (email: string, password: string, userData: {
   }
 }
 
-export const customSignIn = async (emailOrPhone: string, password: string) => {
+export const customSignIn = async (emailOrPhone: string, password: string, preferredRole?: UserRole) => {
   try {
-    console.log('Starting custom signin for:', emailOrPhone)
+    console.log('Starting custom signin for:', emailOrPhone, 'with preferred role:', preferredRole)
 
     // Try to find user by email or phone number
     let query = supabase
@@ -153,9 +156,15 @@ export const customSignIn = async (emailOrPhone: string, password: string) => {
       query = query.eq('phone_number', emailOrPhone)
     }
 
-    const { data, error } = await query.single()
+    // If preferred role is provided, filter by it
+    if (preferredRole) {
+      query = query.eq('role', preferredRole)
+    }
 
-    if (error || !data) {
+    // Fetch results - may return multiple if no role specified
+    const { data: results, error } = await query
+
+    if (error || !results || results.length === 0) {
       console.error('Custom signin failed:', error)
       return {
         data: null,
@@ -163,7 +172,11 @@ export const customSignIn = async (emailOrPhone: string, password: string) => {
       }
     }
 
-    console.log('User signed in successfully')
+    // If multiple accounts exist and no preferred role specified, pick the first one
+    // The UI will validate if it's the correct role for that portal
+    const data = results[0]
+
+    console.log('User signed in successfully with role:', data.role)
 
     // Create a mock user object
     const mockUser = {

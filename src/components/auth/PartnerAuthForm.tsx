@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Eye, EyeOff, Mail, Lock, User, Phone, Briefcase, UserCircle, CheckCircle2 } from 'lucide-react';
-import { signUp, signIn, UserRole } from '@/lib/supabase';
+import { signUp, signIn, UserRole, supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -142,28 +142,54 @@ export default function PartnerAuthForm() {
     setError('');
 
     try {
-      const { data, error: authError } = await signIn(loginData.emailOrPhone, loginData.password);
+      // First, try to find all matching accounts
+      let query = supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('password_hash', btoa(loginData.password));
 
-      if (authError) {
-        setError(authError.message);
+      // Check if input looks like email (contains @) or phone
+      if (loginData.emailOrPhone.includes('@')) {
+        query = query.eq('email', loginData.emailOrPhone.toLowerCase());
+      } else {
+        query = query.eq('phone_number', loginData.emailOrPhone);
+      }
+
+      const { data: accounts, error: fetchError } = await query;
+
+      if (fetchError || !accounts || accounts.length === 0) {
+        setError('Invalid email/phone or password');
         return;
       }
 
-      if (data.user) {
-        await refreshAuth();
-        // Get user profile to determine role
-        const profile = JSON.parse(localStorage.getItem('safar_profile') || '{}');
-        const role = profile.role as UserRole;
+      // Filter out customer accounts - we only want partner accounts
+      const partnerAccounts = accounts.filter(acc => acc.role !== UserRole.CUSTOMER);
 
-        // Check if user is actually a partner
-        if (role === UserRole.CUSTOMER) {
-          setError('This login is for partners only. Please use the customer login.');
-          return;
-        }
-
-        // Redirect to dashboard (will show correct dashboard based on role)
-        navigate('/dashboard');
+      if (partnerAccounts.length === 0) {
+        setError('No partner account found with these credentials. If you have a partner account, please ensure you are using the correct password.');
+        return;
       }
+
+      // Use the first partner account found
+      const partnerAccount = partnerAccounts[0];
+
+      // Create a mock user object and store session
+      const mockUser = {
+        id: partnerAccount.id,
+        email: partnerAccount.email || partnerAccount.phone_number,
+        user_metadata: {
+          full_name: partnerAccount.full_name,
+          role: partnerAccount.role
+        }
+      };
+
+      localStorage.setItem('safar_user', JSON.stringify(mockUser));
+      localStorage.setItem('safar_profile', JSON.stringify(partnerAccount));
+
+      await refreshAuth();
+
+      // Redirect to dashboard (will show correct dashboard based on role)
+      navigate('/dashboard');
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
     } finally {

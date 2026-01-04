@@ -2,15 +2,18 @@
 -- Run these commands in your Supabase SQL Editor
 
 -- 1. Create user_profiles table (main user table)
+-- Updated to allow same email for different roles
 CREATE TABLE IF NOT EXISTS user_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email TEXT UNIQUE NOT NULL,
+    email TEXT NOT NULL,
     name TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('customer', 'driver', 'hotel', 'admin')),
     phone TEXT,
     address TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    -- Composite unique constraint: same email can be used for different roles
+    CONSTRAINT user_profiles_email_role_unique UNIQUE (email, role)
 );
 
 -- 2. Create destinations table
