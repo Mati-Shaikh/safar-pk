@@ -5,11 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Eye, EyeOff, Mail, Lock, User, Phone, Briefcase, UserCircle, CheckCircle2 } from 'lucide-react';
 import { signUp, signIn, UserRole } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/use-toast';
 
 export default function PartnerAuthForm() {
   const { refreshAuth } = useAuth();
@@ -41,7 +41,7 @@ export default function PartnerAuthForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const handleSignupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.name === 'email'
@@ -116,9 +116,6 @@ export default function PartnerAuthForm() {
       }
 
       if (data.user) {
-        // Show success message
-        setSuccessMessage('You have been successfully registered as a partner! Please login to continue your work.');
-
         // Clear form
         setSignupData({
           email: '',
@@ -129,11 +126,8 @@ export default function PartnerAuthForm() {
           role: '' as UserRole
         });
 
-        // Switch to login mode after a brief delay
-        setTimeout(() => {
-          setMode('login');
-          setSuccessMessage('');
-        }, 3000);
+        // Show success dialog
+        setShowSuccessDialog(true);
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
@@ -198,15 +192,6 @@ export default function PartnerAuthForm() {
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              {successMessage && (
-                <Alert className="bg-green-50 border-green-200">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">
-                    {successMessage}
-                  </AlertDescription>
                 </Alert>
               )}
 
@@ -466,6 +451,37 @@ export default function PartnerAuthForm() {
           )}
         </CardContent>
       </Card>
+
+      {/* Success Dialog */}
+      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center justify-center mb-4">
+              <div className="rounded-full bg-green-100 p-3">
+                <CheckCircle2 className="h-8 w-8 text-green-600" />
+              </div>
+            </div>
+            <AlertDialogTitle className="text-center text-2xl">
+              Partner Account Created Successfully!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-base">
+              Congratulations! Your partner account has been created successfully. 
+              Please sign in to access your dashboard and start managing your services.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction
+              onClick={() => {
+                setShowSuccessDialog(false);
+                setMode('login');
+              }}
+              className="bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800"
+            >
+              Continue to Sign In
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Mail, Lock, User, Phone, UserPlus } from 'lucide-react';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { Eye, EyeOff, Mail, Lock, User, Phone, UserPlus, CheckCircle2 } from 'lucide-react';
 import { signUp, UserRole } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -27,6 +28,7 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   // Terms and Conditions text - stored as variable
   const TERMS_TEXT = "By creating an account, you agree to our";
@@ -88,7 +90,8 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
       if (data.user) {
         // Refresh auth context to update navbar
         await refreshAuth();
-        onSuccess();
+        // Show success dialog
+        setShowSuccessDialog(true);
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
@@ -98,7 +101,8 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <>
+      <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
           <UserPlus className="h-6 w-6" />
@@ -275,5 +279,37 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
         </form>
       </CardContent>
     </Card>
+
+    {/* Success Dialog */}
+    <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader>
+          <div className="flex items-center justify-center mb-4">
+            <div className="rounded-full bg-green-100 p-3">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            </div>
+          </div>
+          <AlertDialogTitle className="text-center text-2xl">
+            Account Created Successfully!
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-center text-base">
+            Welcome to SAFARPk! Your customer account has been created successfully. 
+            You can now start exploring and booking amazing trips across Pakistan.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="sm:justify-center">
+          <AlertDialogAction
+            onClick={() => {
+              setShowSuccessDialog(false);
+              onSuccess();
+            }}
+            className="bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800"
+          >
+            Get Started
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
