@@ -35,7 +35,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 gap-0 max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-md p-0 gap-0 max-h-[95vh] overflow-y-auto">
         <DialogHeader className="sr-only">
           <DialogTitle>{mode === 'login' ? 'Sign In' : 'Create Account'}</DialogTitle>
           <DialogDescription>
@@ -46,7 +46,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {mode === 'login' ? (
             <LoginForm
               onSuccess={handleSuccess}

@@ -102,26 +102,26 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
 
   return (
     <>
-      <Card className="w-full max-w-md mx-auto my-4">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
-          <UserPlus className="h-6 w-6" />
-          Create Accounts
+      <Card className="w-full max-w-md mx-auto my-4 shadow-none border-0">
+      <CardHeader className="text-center px-4 sm:px-6">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+          <UserPlus className="h-5 w-5 sm:h-6 sm:w-6" />
+          Create Account
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm sm:text-base">
           Join SAFARPk to start your journey through Pakistan
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="text-sm">{error}</AlertDescription>
             </Alert>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="full_name">
+            <Label htmlFor="full_name" className="text-sm sm:text-base">
               Full Name <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
@@ -134,13 +134,13 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
                 value={formData.full_name}
                 onChange={handleChange}
                 required
-                className="pl-10"
+                className="pl-10 h-11 sm:h-10 text-base sm:text-sm"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">
+            <Label htmlFor="email" className="text-sm sm:text-base">
               Email Address {!formData.phone_number && <span className="text-red-500">*</span>}
               {formData.phone_number && <span className="text-gray-400 text-sm">(Optional)</span>}
             </Label>
@@ -154,13 +154,13 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
                 value={formData.email}
                 onChange={handleChange}
                 required={!formData.phone_number}
-                className="pl-10"
+                className="pl-10 h-11 sm:h-10 text-base sm:text-sm"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone_number">
+            <Label htmlFor="phone_number" className="text-sm sm:text-base">
               Phone Number {!formData.email && <span className="text-red-500">*</span>}
               {formData.email && <span className="text-gray-400 text-sm">(Optional)</span>}
             </Label>
@@ -174,14 +174,14 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
                 value={formData.phone_number}
                 onChange={handleChange}
                 required={!formData.email}
-                className="pl-10"
+                className="pl-10 h-11 sm:h-10 text-base sm:text-sm"
               />
             </div>
             <p className="text-xs text-gray-500">At least one contact method (email or phone) is required</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">
+            <Label htmlFor="password" className="text-sm sm:text-base">
               Password <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
@@ -194,7 +194,7 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="pl-10 pr-10"
+                className="pl-10 pr-10 h-11 sm:h-10 text-base sm:text-sm"
               />
               <button
                 type="button"
@@ -207,7 +207,7 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">
+            <Label htmlFor="confirmPassword" className="text-sm sm:text-base">
               Confirm Password <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
@@ -220,12 +220,12 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="pl-10 pr-10"
+                className="pl-10 pr-10 h-11 sm:h-10 text-base sm:text-sm"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
               >
                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -235,7 +235,7 @@ export default function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormPro
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800"
+            className="w-full bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800 min-h-[44px] text-base"
           >
             {loading ? 'Creating Account...' : 'Create Account'}
           </Button>

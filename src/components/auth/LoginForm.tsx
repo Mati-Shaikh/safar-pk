@@ -60,26 +60,26 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
-          <LogIn className="h-6 w-6" />
+    <Card className="w-full max-w-md mx-auto shadow-none border-0">
+      <CardHeader className="text-center px-4 sm:px-6">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+          <LogIn className="h-5 w-5 sm:h-6 sm:w-6" />
           Sign In
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm sm:text-base">
           Welcome back! Please enter your credentials to access your account.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="text-sm">{error}</AlertDescription>
             </Alert>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="emailOrPhone">Email Address or Phone Number</Label>
+            <Label htmlFor="emailOrPhone" className="text-sm sm:text-base">Email Address or Phone Number</Label>
             <div className="relative">
               <UserCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -90,14 +90,14 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
                 value={formData.emailOrPhone}
                 onChange={handleChange}
                 required
-                className="pl-10"
+                className="pl-10 h-11 sm:h-10 text-base sm:text-sm"
               />
             </div>
             <p className="text-xs text-gray-500">You can sign in with either your email or phone number</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-sm sm:text-base">Password</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -108,12 +108,12 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="pl-10 pr-10"
+                className="pl-10 pr-10 h-11 sm:h-10 text-base sm:text-sm"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -123,7 +123,7 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800"
+            className="w-full bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800 min-h-[44px] text-base"
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>

@@ -113,15 +113,15 @@ export const DriverDashboard: React.FC = () => {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Driver Dashboard</h1>
-              <p className="text-muted-foreground mt-2">Manage your vehicles and bookings</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">Driver Dashboard</h1>
+              <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Manage your vehicles and bookings</p>
             </div>
-            <Button onClick={() => setVehicleFormOpen(true)} className="flex items-center gap-2">
+            <Button onClick={() => setVehicleFormOpen(true)} className="flex items-center gap-2 w-full sm:w-auto min-h-[44px]">
               <Plus className="h-4 w-4" />
               Add Vehicle
             </Button>
@@ -130,30 +130,30 @@ export const DriverDashboard: React.FC = () => {
 
         {/* Driver Profile Section */}
         {profile && (
-          <Card className="mb-6">
+          <Card className="mb-4 sm:mb-6">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <User className="h-5 w-5" />
                 Driver Profile
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <h3 className="font-semibold text-lg">{profile.full_name}</h3>
-                    <p className="text-muted-foreground">Professional Driver</p>
+                    <h3 className="font-semibold text-base sm:text-lg">{profile.full_name}</h3>
+                    <p className="text-muted-foreground text-sm">Professional Driver</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Star className="h-4 w-4 text-yellow-500" />
                     <span className="font-medium">4.8</span>
-                    <span className="text-muted-foreground">(127 reviews)</span>
+                    <span className="text-muted-foreground text-sm">(127 reviews)</span>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{profile.email}</span>
+                    <span className="text-sm break-all">{profile.email}</span>
                   </div>
                   {profile.phone_number && (
                     <div className="flex items-center gap-2">
@@ -166,14 +166,14 @@ export const DriverDashboard: React.FC = () => {
                     <span className="text-sm">Member since {new Date(profile.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-primary">{vehicles.length}</div>
-                    <div className="text-sm text-muted-foreground">Total Vehicles</div>
+                <div className="space-y-3 grid grid-cols-2 md:grid-cols-1 gap-3">
+                  <div className="text-center md:text-right">
+                    <div className="text-xl sm:text-2xl font-bold text-primary">{vehicles.length}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Total Vehicles</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-green-600">{availableVehicles.length}</div>
-                    <div className="text-sm text-muted-foreground">Available Now</div>
+                  <div className="text-center md:text-right">
+                    <div className="text-xl sm:text-2xl font-bold text-green-600">{availableVehicles.length}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Available Now</div>
                   </div>
                 </div>
               </div>
@@ -182,54 +182,54 @@ export const DriverDashboard: React.FC = () => {
         )}
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Earnings</p>
-                  <p className="text-2xl font-bold">PKR {totalEarnings}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Total Earnings</p>
+                  <p className="text-lg sm:text-2xl font-bold">PKR {totalEarnings}</p>
                 </div>
-                <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <Calendar className="h-4 w-4 text-green-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Pending Requests</p>
-                  <p className="text-2xl font-bold">{pendingBookings}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Pending Requests</p>
+                  <p className="text-lg sm:text-2xl font-bold">{pendingBookings}</p>
                 </div>
-                <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <Clock className="h-4 w-4 text-yellow-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Confirmed Trips</p>
-                  <p className="text-2xl font-bold">{confirmedBookings}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Confirmed Trips</p>
+                  <p className="text-lg sm:text-2xl font-bold">{confirmedBookings}</p>
                 </div>
-                <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <Car className="h-4 w-4 text-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Average Rating</p>
-                  <p className="text-2xl font-bold">4.8</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Average Rating</p>
+                  <p className="text-lg sm:text-2xl font-bold">4.8</p>
                 </div>
-                <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <Star className="h-4 w-4 text-purple-600" />
                 </div>
               </div>
@@ -238,16 +238,20 @@ export const DriverDashboard: React.FC = () => {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="calendar" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-            <TabsTrigger value="vehicles">My Vehicles</TabsTrigger>
-            <TabsTrigger value="bookings">Booking List</TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="calendar" className="space-y-4 sm:space-y-6">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="px-4 sm:px-0">
+              <TabsList className="inline-flex w-auto min-w-full sm:min-w-0">
+                <TabsTrigger value="calendar" className="text-xs sm:text-sm px-3 sm:px-4">Calendar View</TabsTrigger>
+                <TabsTrigger value="vehicles" className="text-xs sm:text-sm px-3 sm:px-4">My Vehicles</TabsTrigger>
+                <TabsTrigger value="bookings" className="text-xs sm:text-sm px-3 sm:px-4">Booking List</TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
 
-          <TabsContent value="calendar" className="space-y-6">
+          <TabsContent value="calendar" className="space-y-4 sm:space-y-6">
             <div>
-              <h2 className="text-2xl font-bold">Booking Calendar</h2>
+              <h2 className="text-xl sm:text-2xl font-bold">Booking Calendar</h2>
               <p className="text-muted-foreground">View and manage your bookings in calendar view</p>
             </div>
 

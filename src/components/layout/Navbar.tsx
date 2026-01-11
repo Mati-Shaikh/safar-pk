@@ -54,12 +54,12 @@ export const Navbar: React.FC = () => {
 
   return (
     <nav className="bg-background border-b border-border sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <MapPin className="h-8 w-8 text-primary" />
-            <Link to="/" className="text-xl font-bold">SAFARPk</Link>
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
+            <MapPin className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+            <Link to="/" className="text-lg sm:text-xl font-bold">SAFARPk</Link>
           </div>
           
           {/* Desktop Navigation */}
@@ -88,12 +88,12 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3 lg:space-x-4">
             {user && profile ? (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 lg:space-x-4">
                 <div className="flex items-center space-x-2">
                   <User className="h-4 w-4" />
-                  <span className="text-sm">{profile.full_name}</span>
+                  <span className="text-sm lg:text-base">{profile.full_name}</span>
                   <span className="text-xs text-muted-foreground">({getRoleName(profile.role)})</span>
                 </div>
                 <Button variant="outline" size="sm" onClick={handleSignOut}>
@@ -102,9 +102,10 @@ export const Navbar: React.FC = () => {
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 lg:space-x-4">
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={() => openAuthModal('login')}
                   className="text-gray-700 hover:text-primary transition-colors"
                 >
@@ -112,6 +113,7 @@ export const Navbar: React.FC = () => {
                 </Button>
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => openAuthModal('signup')}
                   className="text-gray-700 hover:text-primary transition-colors"
                 >
@@ -136,8 +138,8 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile/Tablet Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
+          <div className="md:hidden border-t border-gray-200">
+            <div className="px-2 pt-2 pb-3 space-y-1 bg-white">
               {/* Main Navigation Links - Always visible */}
               <Link
                 to="/"
@@ -153,16 +155,6 @@ export const Navbar: React.FC = () => {
               >
                 Destinations
               </Link>
-              {/* Hide My Trips for customers - they see Coming Soon page instead */}
-              {/* {(!user || !profile || profile.role !== UserRole.CUSTOMER) && (
-                <Link
-                  to="/trip"
-                  className={getNavLinkClass("/trip", true)}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  My Trips
-                </Link>
-              )} */}
               {/* Show Dashboard link for all logged in users */}
               {user && profile && (
                 <Link
@@ -173,25 +165,18 @@ export const Navbar: React.FC = () => {
                   Dashboard
                 </Link>
               )}
-              {/* <Link
-                to="/map"
-                className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Map
-              </Link> */}
 
               {!user && (
                 <>
                   {/* Auth Links for mobile */}
-                  <div className="border-t border-gray-200 pt-2 mt-2 space-y-2">
+                  <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
                     <Button
                       variant="ghost"
                       onClick={() => {
                         openAuthModal('login');
                         setIsMenuOpen(false);
                       }}
-                      className="w-full justify-start px-3 py-2 text-gray-700 hover:text-primary"
+                      className="w-full justify-start px-3 py-2.5 text-base text-gray-700 hover:text-primary hover:bg-primary/5"
                     >
                       Login
                     </Button>
@@ -201,7 +186,7 @@ export const Navbar: React.FC = () => {
                         openAuthModal('signup');
                         setIsMenuOpen(false);
                       }}
-                      className="w-full justify-start px-3 py-2 text-gray-700 hover:text-primary"
+                      className="w-full justify-start px-3 py-2.5 text-base text-gray-700 hover:text-primary hover:bg-primary/5"
                     >
                       Sign Up
                     </Button>
@@ -210,11 +195,13 @@ export const Navbar: React.FC = () => {
               )}
 
               {user && profile ? (
-                <div className="px-3 py-2 border-t border-gray-200 pt-2 mt-2">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <User className="h-4 w-4" />
-                    <span className="text-sm">{profile.full_name}</span>
-                    <span className="text-xs text-muted-foreground">({getRoleName(profile.role)})</span>
+                <div className="px-3 py-3 border-t border-gray-200 mt-3 space-y-2">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <User className="h-5 w-5 text-gray-600" />
+                    <div>
+                      <p className="text-sm font-medium">{profile.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{getRoleName(profile.role)}</p>
+                    </div>
                   </div>
                   <Button
                     variant="outline"

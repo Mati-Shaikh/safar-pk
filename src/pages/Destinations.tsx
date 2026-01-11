@@ -170,12 +170,12 @@ const Destinations = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-black via-gray-800 to-black text-white">
-        <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-12 lg:py-16">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4">
               Discover Pakistan's Destinations
             </h1>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-300 mb-6 sm:mb-8 px-2">
               Explore breathtaking landscapes, rich culture, and unforgettable adventures
             </p>
           </div>
@@ -183,19 +183,19 @@ const Destinations = () => {
       </div>
 
       {/* Search and Filter Section */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input 
               placeholder="Search destinations, trips, or activities..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-gray-300 focus:border-gray-600"
+              className="pl-10 border-gray-300 focus:border-gray-600 h-11 sm:h-10 text-base sm:text-sm"
             />
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full md:w-48 border-gray-300 focus:border-gray-600">
+            <SelectTrigger className="w-full border-gray-300 focus:border-gray-600 h-11 sm:h-10 text-base sm:text-sm">
               <Filter className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -208,42 +208,43 @@ const Destinations = () => {
         </div>
 
         {/* Destinations Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {filteredTrips.map((trip) => (
             <Card key={trip.id} className="group hover:shadow-2xl transition-all duration-300 border-gray-200 overflow-hidden">
               <div className="relative">
                 <img 
                   src={trip.image} 
                   alt={trip.name} 
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" 
+                  className="w-full h-44 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300" 
                 />
-                <div className="absolute top-4 left-4">
-                  <Badge className="bg-black/80 text-white">{trip.category}</Badge>
+                <div className="absolute top-3 sm:top-4 left-3 sm:left-4">
+                  <Badge className="bg-black/80 text-white text-xs sm:text-sm">{trip.category}</Badge>
                 </div>
-                <div className="absolute top-4 right-4">
-                  <Badge variant="secondary" className="bg-white/90 text-black">
+                <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
+                  <Badge variant="secondary" className="bg-white/90 text-black text-xs sm:text-sm">
                     {trip.duration}
                   </Badge>
                 </div>
               </div>
               
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="mb-3">
-                  <h3 className="text-xl font-bold text-gray-800 group-hover:text-black transition-colors">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800 group-hover:text-black transition-colors">
                     {trip.name}
                   </h3>
-                  <p className="text-gray-600 text-sm mt-1 line-clamp-2">{trip.description}</p>
+                  <p className="text-gray-600 text-xs sm:text-sm mt-1 line-clamp-2">{trip.description}</p>
                 </div>
                 
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                    <span className="font-medium text-sm">{trip.rating}</span>
-                    <span className="text-gray-500 text-sm ml-1">({trip.reviews})</span>
+                    <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400 mr-1" />
+                    <span className="font-medium text-xs sm:text-sm">{trip.rating}</span>
+                    <span className="text-gray-500 text-xs sm:text-sm ml-1">({trip.reviews})</span>
                   </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Users className="h-4 w-4 mr-1" />
-                    {trip.groupSize}
+                  <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                    <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                    <span className="hidden sm:inline">{trip.groupSize}</span>
+                    <span className="sm:hidden">{trip.groupSize.split(' ')[0]}</span>
                   </div>
                 </div>
 
@@ -261,10 +262,10 @@ const Destinations = () => {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <span className="text-2xl font-bold text-gray-800">{trip.price}</span>
-                    <span className="text-gray-500 text-sm ml-1">per person</span>
+                    <span className="text-xl sm:text-2xl font-bold text-gray-800">{trip.price}</span>
+                    <span className="text-gray-500 text-xs sm:text-sm ml-1 block sm:inline">per person</span>
                   </div>
                   
                   <Dialog>
@@ -272,17 +273,17 @@ const Destinations = () => {
     <Button 
       variant="outline" 
       size="sm"
-      className="border-gray-300 text-gray-700 hover:bg-gray-50"
+      className="border-gray-300 text-gray-700 hover:bg-gray-50 min-h-[40px] text-xs sm:text-sm"
       onClick={() => setSelectedTrip(trip)}
     >
-      <Eye className="mr-2 h-4 w-4" />
+      <Eye className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
       View Details
     </Button>
   </DialogTrigger>
 
-  <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl lg:max-w-4xl px-4 sm:px-6 py-6">
+  <DialogContent className="max-h-[90vh] overflow-y-auto max-w-[95vw] sm:max-w-2xl lg:max-w-4xl px-4 sm:px-6 py-5 sm:py-6">
     <DialogHeader>
-      <DialogTitle className="text-lg sm:text-2xl text-gray-800">{trip.name}</DialogTitle>
+      <DialogTitle className="text-lg sm:text-xl lg:text-2xl text-gray-800 pr-6">{trip.name}</DialogTitle>
       <DialogDescription className="text-sm sm:text-base">{trip.description}</DialogDescription>
     </DialogHeader>
     
@@ -290,12 +291,12 @@ const Destinations = () => {
       <img 
         src={trip.image} 
         alt={trip.name} 
-        className="w-full h-48 sm:h-64 object-cover rounded-lg" 
+        className="w-full h-48 sm:h-56 md:h-64 object-cover rounded-lg" 
       />
       
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
+      <div className="space-y-3 sm:space-y-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          <div className="text-center p-2.5 sm:p-3 bg-gray-50 rounded-lg">
             <Calendar className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 text-gray-600" />
             <div className="font-semibold text-sm sm:text-base">{trip.duration}</div>
             <div className="text-xs text-gray-600">Duration</div>
@@ -386,18 +387,18 @@ const Destinations = () => {
       </div>
 
       {/* Contact Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6">Need Help Planning Your Trip?</h2>
-          <p className="text-xl text-gray-600 mb-8">
+      <section className="py-12 sm:py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Need Help Planning Your Trip?</h2>
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8">
             Our travel experts are here to help you plan the perfect adventure
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <Button size="lg" className="bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800 min-h-[44px] text-base">
               <Phone className="h-4 w-4 mr-2" />
               Call Us
             </Button>
-            <Button size="lg" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+            <Button size="lg" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 min-h-[44px] text-base">
               <Mail className="h-4 w-4 mr-2" />
               Email Us
             </Button>
