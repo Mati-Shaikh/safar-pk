@@ -292,7 +292,7 @@ export default function PartnerAuthForm() {
                   <SelectContent>
                     <SelectItem value={UserRole.HOTEL_OWNER}>Hotel Owner</SelectItem>
                     <SelectItem value={UserRole.DRIVER}>Driver</SelectItem>
-                    <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                    {/* <SelectItem value={UserRole.ADMIN}>Admin</SelectItem> */}
                   </SelectContent>
                 </Select>
               </div>
