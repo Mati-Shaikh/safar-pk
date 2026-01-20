@@ -303,7 +303,7 @@ export const sendPasswordResetEmail = async (email: string, userType: 'customer'
 
     // Determine the correct redirect URL
     // Always use production URL for password reset emails
-    const redirectUrl = 'https://safarpk.com/reset-password'
+    const redirectUrl = 'https://www.safarpk.com/reset-password'
 
     console.log('📧 Sending password reset email...')
     console.log('📍 Redirect URL:', redirectUrl)
