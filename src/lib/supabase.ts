@@ -337,6 +337,7 @@ export const sendPasswordResetEmail = async (email: string, userType: 'customer'
 // Update password using Supabase Auth (called from reset password page)
 export const updatePasswordWithSupabase = async (newPassword: string) => {
   try {
+    // Update password in Supabase Auth
     const { error } = await supabase.auth.updateUser({
       password: newPassword
     })
@@ -344,6 +345,26 @@ export const updatePasswordWithSupabase = async (newPassword: string) => {
     if (error) {
       console.error('Password update error:', error)
       return { error: { message: error.message } }
+    }
+
+    // IMPORTANT: Also update the password_hash in user_profiles for custom auth compatibility
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .update({
+          password_hash: btoa(newPassword),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+
+      if (profileError) {
+        console.warn('Failed to update password_hash in user_profiles:', profileError)
+        // Don't fail the whole operation if this fails
+      } else {
+        console.log('✅ Password updated in both Auth and user_profiles')
+      }
     }
 
     console.log('✅ Password updated successfully')
