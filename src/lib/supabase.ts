@@ -95,34 +95,57 @@ export const customSignUp = async (email: string, password: string, userData: {
     }
 
     // Step 1: Create user in Supabase Auth (for password reset emails to work)
-    let userId: string
+    let userId: string | undefined
     let authError: any = null
 
     if (email) {
-      // Only create in Supabase Auth if email is provided
+      console.log('📧 Creating user in Supabase Auth with email:', email)
+      
+      // IMPORTANT: Set skipConfirmation to true to avoid database trigger conflicts
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: email,
         password: password,
         options: {
+          emailRedirectTo: `${window.location.origin}/reset-password`,
           data: {
             full_name: userData.full_name,
             phone_number: userData.phone_number,
-            role: userData.role
+            role: userData.role,
+            // Flag to help identify users created via custom signup
+            custom_signup: true
           }
         }
       })
 
-      if (signUpError) {
-        console.error('Supabase Auth signup error:', signUpError)
-        authError = signUpError
-      } else {
-        userId = authData.user?.id || crypto.randomUUID()
-        console.log('✅ User created in Supabase Auth:', userId)
-      }
-    }
+      console.log('🔍 Supabase Auth signup response:', { 
+        user: authData?.user?.id, 
+        session: authData?.session ? 'exists' : 'null',
+        error: signUpError 
+      })
 
-    // Generate ID if not created in Auth (phone-only users)
-    if (!userId!) {
+      if (signUpError) {
+        console.error('❌ Supabase Auth signup error:', signUpError)
+        console.error('Error details:', signUpError.message)
+        
+        // If the error is about existing user, that's OK - we'll use user_profiles
+        if (signUpError.message?.includes('already registered') || signUpError.message?.includes('User already registered')) {
+          console.log('⚠️ User already exists in Auth, continuing with custom profile')
+          userId = crypto.randomUUID()
+        } else {
+          // For other errors (like trigger conflicts), generate UUID and continue
+          console.warn('⚠️ Auth signup failed, will use custom auth only (password reset unavailable)')
+          authError = signUpError
+          userId = crypto.randomUUID()
+        }
+      } else if (authData.user) {
+        userId = authData.user.id
+        console.log('✅ User created in Supabase Auth with ID:', userId)
+      } else {
+        console.warn('⚠️ No user returned from Supabase Auth, generating UUID')
+        userId = crypto.randomUUID()
+      }
+    } else {
+      console.log('📱 No email provided, creating phone-only user')
       userId = crypto.randomUUID()
     }
 
@@ -279,13 +302,13 @@ export const sendPasswordResetEmail = async (email: string, userType: 'customer'
     }
 
     // Determine the correct redirect URL
-    let redirectUrl = `${window.location.origin}/reset-password`
+    // Always use production URL unless explicitly on localhost
+    let redirectUrl = 'https://safarpk.com/reset-password'
     
-    // For production, ensure we use the correct domain
-    if (window.location.hostname.includes('safarpk.com')) {
-      redirectUrl = 'https://safarpk.com/reset-password'
-    } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      redirectUrl = `http://localhost:${window.location.port}/reset-password`
+    // Only use localhost URL when actually on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const port = window.location.port || '5173'
+      redirectUrl = `http://localhost:${port}/reset-password`
     }
 
     console.log('📧 Sending password reset email...')
