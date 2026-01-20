@@ -6,7 +6,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false
+    detectSessionInUrl: true // IMPORTANT: Must be true for password reset to work
   },
   global: {
     headers: {
@@ -94,8 +94,39 @@ export const customSignUp = async (email: string, password: string, userData: {
       }
     }
 
-    // Create user directly in user_profiles table
-    const userId = crypto.randomUUID()
+    // Step 1: Create user in Supabase Auth (for password reset emails to work)
+    let userId: string
+    let authError: any = null
+
+    if (email) {
+      // Only create in Supabase Auth if email is provided
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            full_name: userData.full_name,
+            phone_number: userData.phone_number,
+            role: userData.role
+          }
+        }
+      })
+
+      if (signUpError) {
+        console.error('Supabase Auth signup error:', signUpError)
+        authError = signUpError
+      } else {
+        userId = authData.user?.id || crypto.randomUUID()
+        console.log('✅ User created in Supabase Auth:', userId)
+      }
+    }
+
+    // Generate ID if not created in Auth (phone-only users)
+    if (!userId!) {
+      userId = crypto.randomUUID()
+    }
+
+    // Step 2: Create user in user_profiles table (for custom auth)
     const { data, error } = await supabase
       .from('user_profiles')
       .insert({
@@ -116,7 +147,7 @@ export const customSignUp = async (email: string, password: string, userData: {
       return { data: null, error }
     }
 
-    console.log('User created successfully with custom auth')
+    console.log('✅ User created successfully in user_profiles')
 
     // Create a mock user object similar to Supabase auth
     const mockUser = {
@@ -247,19 +278,37 @@ export const sendPasswordResetEmail = async (email: string, userType: 'customer'
       return { error: null }
     }
 
-    // Use Supabase Auth's built-in password reset
-    // This will send an email with a secure token automatically
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-
-    if (resetError) {
-      console.error('Supabase password reset error:', resetError)
-      // Don't expose specific errors to prevent email enumeration
-      return { error: null }
+    // Determine the correct redirect URL
+    let redirectUrl = `${window.location.origin}/reset-password`
+    
+    // For production, ensure we use the correct domain
+    if (window.location.hostname.includes('safarpk.com')) {
+      redirectUrl = 'https://safarpk.com/reset-password'
+    } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      redirectUrl = `http://localhost:${window.location.port}/reset-password`
     }
 
-    console.log('✅ Password reset email sent successfully via Supabase Auth')
+    console.log('📧 Sending password reset email...')
+    console.log('📍 Redirect URL:', redirectUrl)
+    console.log('✉️ To:', email)
+
+    // Use Supabase Auth's built-in password reset
+    const { data, error: resetError } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
+      redirectTo: redirectUrl,
+    })
+
+    console.log('📬 Supabase response:', { data, error: resetError })
+
+    if (resetError) {
+      console.error('❌ Supabase password reset error:', resetError)
+      // Return error for debugging (in production, you might want to hide this)
+      return { error: { message: resetError.message } }
+    }
+
+    console.log('✅ Password reset email sent successfully!')
+    console.log('⏰ Email will expire in 1 hour')
+    console.log('📥 Check inbox and spam folder')
+    
     return { error: null }
 
   } catch (err) {
