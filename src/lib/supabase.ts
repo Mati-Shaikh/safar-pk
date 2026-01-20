@@ -218,6 +218,99 @@ export const customGetCurrentUser = async () => {
   return { user, error: null }
 }
 
+// Password reset functions using Supabase Auth
+export const sendPasswordResetEmail = async (email: string, userType: 'customer' | 'partner' = 'customer') => {
+  try {
+    console.log('Sending password reset email to:', email, 'for user type:', userType)
+
+    // Verify user exists with this email in our custom user_profiles table
+    const { data: userProfile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('email, role')
+      .eq('email', email.toLowerCase())
+      .single()
+
+    if (profileError || !userProfile) {
+      // For security, return success even if user doesn't exist (prevents email enumeration)
+      console.log('User not found in profiles, but returning success for security')
+      return { error: null }
+    }
+
+    // Validate user type matches role
+    const allowedRoles = userType === 'partner' 
+      ? [UserRole.DRIVER, UserRole.HOTEL_OWNER] 
+      : [UserRole.CUSTOMER, UserRole.ADMIN]
+    
+    if (!allowedRoles.includes(userProfile.role as UserRole)) {
+      console.log('User role does not match requested user type')
+      // Return success to prevent role enumeration
+      return { error: null }
+    }
+
+    // Use Supabase Auth's built-in password reset
+    // This will send an email with a secure token automatically
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+
+    if (resetError) {
+      console.error('Supabase password reset error:', resetError)
+      // Don't expose specific errors to prevent email enumeration
+      return { error: null }
+    }
+
+    console.log('✅ Password reset email sent successfully via Supabase Auth')
+    return { error: null }
+
+  } catch (err) {
+    console.error('Unexpected error during password reset:', err)
+    return { error: { message: 'An unexpected error occurred' } }
+  }
+}
+
+// Update password using Supabase Auth (called from reset password page)
+export const updatePasswordWithSupabase = async (newPassword: string) => {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    })
+
+    if (error) {
+      console.error('Password update error:', error)
+      return { error: { message: error.message } }
+    }
+
+    console.log('✅ Password updated successfully')
+    return { error: null }
+
+  } catch (err) {
+    console.error('Unexpected error updating password:', err)
+    return { error: { message: 'An unexpected error occurred' } }
+  }
+}
+
+// Rate limiting for password reset (simple in-memory implementation)
+const resetAttempts = new Map<string, { count: number; resetAt: number }>()
+
+export const checkResetRateLimit = (email: string): boolean => {
+  const now = Date.now()
+  const attempt = resetAttempts.get(email)
+
+  if (!attempt || now > attempt.resetAt) {
+    // Reset counter after 15 minutes
+    resetAttempts.set(email, { count: 1, resetAt: now + 15 * 60 * 1000 })
+    return true
+  }
+
+  if (attempt.count >= 3) {
+    // Max 3 attempts per 15 minutes
+    return false
+  }
+
+  attempt.count++
+  return true
+}
+
 // Use custom auth system
 export const signUp = customSignUp
 export const signIn = customSignIn

@@ -12,9 +12,10 @@ import { useNavigate } from 'react-router-dom';
 interface LoginFormProps {
   onSuccess: () => void;
   onSwitchToSignup: () => void;
+  onSwitchToForgotPassword?: () => void;
 }
 
-export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProps) {
+export default function LoginForm({ onSuccess, onSwitchToSignup, onSwitchToForgotPassword }: LoginFormProps) {
   const { refreshAuth } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -118,6 +119,18 @@ export default function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProp
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+          </div>
+
+          <div className="flex justify-end">
+            {onSwitchToForgotPassword && (
+              <button
+                type="button"
+                onClick={onSwitchToForgotPassword}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Forgot password?
+              </button>
+            )}
           </div>
 
           <Button

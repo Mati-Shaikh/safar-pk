@@ -18,6 +18,7 @@ import { AdminDashboard } from "./pages/AdminDashboard";
 import { ComingSoon } from "./pages/ComingSoon";
 import CustomerTerms from "./pages/CustomerTerms";
 import PartnerTerms from "./pages/PartnerTerm";
+import ResetPassword from "./pages/ResetPassword";
 import { UserRole } from "./lib/supabase";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,9 @@ const AppContent = () => {
         {/* Terms & Conditions */}
         <Route path="/customer/terms-and-conditions" element={<CustomerTerms />} />
         <Route path="/partner/terms-and-conditions" element={<PartnerTerms />} />
+
+        {/* Password Reset */}
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Dashboard route - always available, handles auth internally */}
         <Route path="/dashboard" element={getDashboard()} />

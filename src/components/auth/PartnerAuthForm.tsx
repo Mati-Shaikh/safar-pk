@@ -10,11 +10,12 @@ import { Eye, EyeOff, Mail, Lock, User, Phone, Briefcase, UserCircle, CheckCircl
 import { signUp, signIn, UserRole, supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ForgotPasswordForm from './ForgotPasswordForm';
 
 export default function PartnerAuthForm() {
   const { refreshAuth } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<'login' | 'signup'>('signup');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>('signup');
 
   // Terms and Conditions text - stored as variables
   const TERMS_TEXT = "By creating an account, you agree to our";
@@ -199,21 +200,27 @@ export default function PartnerAuthForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4 overflow-y-auto">
-      <Card className="w-full max-w-md my-8">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
-            <Briefcase className="h-6 w-6" />
-            {mode === 'login' ? 'Partner Sign In' : 'Partner Registration'}
-          </CardTitle>
-          <CardDescription>
-            {mode === 'login'
-              ? 'Sign in to manage your services'
-              : 'Join SAFARPk as a service provider'
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {mode === 'signup' ? (
+      {mode === 'forgot-password' ? (
+        <ForgotPasswordForm
+          onBack={() => setMode('login')}
+          userType="partner"
+        />
+      ) : (
+        <Card className="w-full max-w-md my-8">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+              <Briefcase className="h-6 w-6" />
+              {mode === 'login' ? 'Partner Sign In' : 'Partner Registration'}
+            </CardTitle>
+            <CardDescription>
+              {mode === 'login'
+                ? 'Sign in to manage your services'
+                : 'Join SAFARPk as a service provider'
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {mode === 'signup' ? (
             <form onSubmit={handleSignupSubmit} className="space-y-4">
               {error && (
                 <Alert variant="destructive">
@@ -444,6 +451,16 @@ export default function PartnerAuthForm() {
                 </div>
               </div>
 
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setMode('forgot-password')}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Forgot password?
+                </button>
+              </div>
+
               <Button
                 type="submit"
                 disabled={loading}
@@ -477,6 +494,7 @@ export default function PartnerAuthForm() {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Success Dialog */}
       <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
