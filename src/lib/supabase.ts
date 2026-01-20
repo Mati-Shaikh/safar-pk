@@ -302,14 +302,8 @@ export const sendPasswordResetEmail = async (email: string, userType: 'customer'
     }
 
     // Determine the correct redirect URL
-    // Always use production URL unless explicitly on localhost
-    let redirectUrl = 'https://safarpk.com/reset-password'
-    
-    // Only use localhost URL when actually on localhost
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      const port = window.location.port || '5173'
-      redirectUrl = `http://localhost:${port}/reset-password`
-    }
+    // Always use production URL for password reset emails
+    const redirectUrl = 'https://safarpk.com/reset-password'
 
     console.log('📧 Sending password reset email...')
     console.log('📍 Redirect URL:', redirectUrl)
