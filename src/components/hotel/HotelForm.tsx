@@ -166,6 +166,7 @@ export const HotelForm: React.FC<HotelFormProps> = ({
             onImagesChange={handleImagesChange}
             maxImages={10}
             label="Hotel Images"
+            bucket="hotel-images"
           />
 
           <div className="flex gap-2 pt-4">

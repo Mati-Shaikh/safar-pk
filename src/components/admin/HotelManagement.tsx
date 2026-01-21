@@ -722,6 +722,7 @@ export const HotelManagement: React.FC = () => {
                         onImagesChange={(images) => setNewHotel({ ...newHotel, images })}
                         maxImages={10}
                         label="Hotel Images"
+                        bucket="hotel-images"
                       />
                     </div>
                     <DialogFooter>
@@ -917,6 +918,7 @@ export const HotelManagement: React.FC = () => {
                           onImagesChange={(images) => setNewRoom({ ...newRoom, images })}
                           maxImages={8}
                           label="Room Images"
+                          bucket="hotel-images"
                         />
                         <div className="flex items-center space-x-2">
                           <input
@@ -1164,6 +1166,7 @@ export const HotelManagement: React.FC = () => {
                           onImagesChange={(images) => setNewVehicle({ ...newVehicle, images })}
                           maxImages={8}
                           label="Vehicle Images"
+                          bucket="vehicle-images"
                         />
                         <div className="flex items-center space-x-2">
                           <input
@@ -1345,6 +1348,7 @@ export const HotelManagement: React.FC = () => {
                 onImagesChange={(images) => setEditingHotel({ ...editingHotel, images })}
                 maxImages={10}
                 label="Hotel Images"
+                bucket="hotel-images"
               />
             </div>
           )}
@@ -1418,6 +1422,7 @@ export const HotelManagement: React.FC = () => {
                 onImagesChange={(images) => setEditingRoom({ ...editingRoom, images })}
                 maxImages={8}
                 label="Room Images"
+                bucket="hotel-images"
               />
             </div>
           )}
@@ -1492,6 +1497,7 @@ export const HotelManagement: React.FC = () => {
                 onImagesChange={(images) => setEditingVehicle({ ...editingVehicle, images })}
                 maxImages={8}
                 label="Vehicle Images"
+                bucket="vehicle-images"
               />
               <div className="flex items-center space-x-2">
                 <input

@@ -70,6 +70,23 @@ export default function PartnerAuthForm() {
   };
 
 
+  const validatePassword = (password: string): string[] => {
+    const errors: string[] = [];
+    if (password.length < 8) {
+      errors.push('at least 8 characters');
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push('one uppercase letter');
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push('one lowercase letter');
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push('one number');
+    }
+    return errors;
+  };
+
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -94,8 +111,10 @@ export default function PartnerAuthForm() {
       return;
     }
 
-    if (signupData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    // Validate password strength
+    const passwordErrors = validatePassword(signupData.password);
+    if (passwordErrors.length > 0) {
+      setError(`Password must contain ${passwordErrors.join(', ')}`);
       setLoading(false);
       return;
     }

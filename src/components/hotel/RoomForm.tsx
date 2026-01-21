@@ -208,6 +208,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({
             onImagesChange={handleImagesChange}
             maxImages={8}
             label="Room Images"
+            bucket="hotel-images"
           />
 
           <div className="flex items-center space-x-2">

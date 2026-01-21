@@ -320,6 +320,7 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
             onImagesChange={handleImagesChange}
             maxImages={10}
             label="Vehicle Images"
+            bucket="vehicle-images"
           />
           
           {/* Pricing Configuration Section */}

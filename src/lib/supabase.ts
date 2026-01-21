@@ -1191,3 +1191,187 @@ export const getVehicleCurrentPrice = async (vehicleId: string, bookingDate?: st
     return { data: null, error };
   }
 };
+
+// ============================================================================
+// IMAGE STORAGE UTILITIES
+// ============================================================================
+
+export type StorageBucket = 'hotel-images' | 'vehicle-images' | 'destination-images' | 'trip-images';
+
+export interface UploadImageResult {
+  url: string;
+  path: string;
+  error?: string;
+}
+
+/**
+ * Upload an image to Supabase Storage
+ * @param file - The file to upload (Blob or File)
+ * @param bucket - The storage bucket name
+ * @param fileName - Optional custom filename
+ * @returns Object with URL and path or error
+ */
+export const uploadImage = async (
+  file: Blob | File,
+  bucket: StorageBucket,
+  fileName?: string
+): Promise<UploadImageResult> => {
+  try {
+    // Generate unique filename if not provided
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 9);
+    const extension = file instanceof File 
+      ? file.name.split('.').pop() 
+      : 'jpg';
+    const finalFileName = fileName || `image-${timestamp}-${random}.${extension}`;
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(finalFileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Upload error:', error);
+      return { url: '', path: '', error: error.message };
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+
+    return {
+      url: publicUrl,
+      path: data.path,
+      error: undefined
+    };
+  } catch (err) {
+    console.error('Unexpected upload error:', err);
+    return { 
+      url: '', 
+      path: '', 
+      error: err instanceof Error ? err.message : 'Upload failed' 
+    };
+  }
+};
+
+/**
+ * Upload multiple images to Supabase Storage
+ * @param files - Array of files to upload
+ * @param bucket - The storage bucket name
+ * @param onProgress - Optional progress callback
+ * @returns Array of upload results
+ */
+export const uploadMultipleImages = async (
+  files: (Blob | File)[],
+  bucket: StorageBucket,
+  onProgress?: (current: number, total: number) => void
+): Promise<UploadImageResult[]> => {
+  const results: UploadImageResult[] = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const result = await uploadImage(files[i], bucket);
+    results.push(result);
+    
+    if (onProgress) {
+      onProgress(i + 1, files.length);
+    }
+  }
+
+  return results;
+};
+
+/**
+ * Delete an image from Supabase Storage
+ * @param url - The full public URL of the image
+ * @returns Success status and error if any
+ */
+export const deleteImage = async (url: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    // Extract bucket and path from URL
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/');
+    
+    // URL format: /storage/v1/object/public/{bucket}/{path}
+    const publicIndex = pathParts.indexOf('public');
+    if (publicIndex === -1 || pathParts.length < publicIndex + 3) {
+      return { success: false, error: 'Invalid storage URL format' };
+    }
+
+    const bucket = pathParts[publicIndex + 1] as StorageBucket;
+    const filePath = pathParts.slice(publicIndex + 2).join('/');
+
+    const { error } = await supabase.storage
+      .from(bucket)
+      .remove([filePath]);
+
+    if (error) {
+      console.error('Delete error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('Unexpected delete error:', err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err.message : 'Delete failed' 
+    };
+  }
+};
+
+/**
+ * Delete multiple images from Supabase Storage
+ * @param urls - Array of image URLs to delete
+ * @returns Array of results
+ */
+export const deleteMultipleImages = async (
+  urls: string[]
+): Promise<{ success: boolean; error?: string }[]> => {
+  const results = await Promise.all(
+    urls.map(url => deleteImage(url))
+  );
+  return results;
+};
+
+/**
+ * Replace an old image with a new one
+ * @param oldUrl - URL of the image to replace
+ * @param newFile - New file to upload
+ * @param bucket - Storage bucket
+ * @returns Upload result
+ */
+export const replaceImage = async (
+  oldUrl: string,
+  newFile: Blob | File,
+  bucket: StorageBucket
+): Promise<UploadImageResult> => {
+  // Upload new image first
+  const uploadResult = await uploadImage(newFile, bucket);
+  
+  if (uploadResult.error) {
+    return uploadResult;
+  }
+
+  // Delete old image (don't fail if this errors)
+  await deleteImage(oldUrl);
+
+  return uploadResult;
+};
+
+/**
+ * Check if URL is a Supabase Storage URL
+ * @param url - URL to check
+ * @returns True if it's a Supabase Storage URL
+ */
+export const isSupabaseStorageUrl = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.pathname.includes('/storage/v1/object/public/');
+  } catch {
+    return false;
+  }
+};

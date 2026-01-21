@@ -360,6 +360,7 @@ export const VehicleManagement: React.FC = () => {
                     onImagesChange={handleImagesChange}
                     maxImages={8}
                     label="Vehicle Images"
+                    bucket="vehicle-images"
                   />
                 </div>
                 <DialogFooter>
@@ -510,6 +511,7 @@ export const VehicleManagement: React.FC = () => {
                 onImagesChange={(images) => setEditingVehicle({ ...editingVehicle, images })}
                 maxImages={8}
                 label="Vehicle Images"
+                bucket="vehicle-images"
               />
             </div>
           )}
