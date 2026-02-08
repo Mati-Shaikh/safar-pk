@@ -64,6 +64,7 @@ export const HotelDashboard: React.FC = () => {
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [showCreateHotel, setShowCreateHotel] = useState(false);
   const [showCreateVehicle, setShowCreateVehicle] = useState(false);
+  const [showCreateDriver, setShowCreateDriver] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [newVehicle, setNewVehicle] = useState({
     driver_id: '',
@@ -75,6 +76,13 @@ export const HotelDashboard: React.FC = () => {
     features: [] as string[],
     images: [] as string[],
     available: true
+  });
+  const [newDriver, setNewDriver] = useState({
+    email: '',
+    full_name: '',
+    phone_number: '',
+    password: '',
+    confirmPassword: ''
   });
   const [featureInput, setFeatureInput] = useState('');
 
@@ -507,6 +515,111 @@ export const HotelDashboard: React.FC = () => {
     });
   };
 
+  const handleCreateDriver = async () => {
+    // Validation
+    if (!newDriver.full_name || !newDriver.email || !newDriver.password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newDriver.password !== newDriver.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newDriver.password.length < 8) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Create driver user profile
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .insert({
+          email: newDriver.email,
+          full_name: newDriver.full_name,
+          phone_number: newDriver.phone_number || null,
+          role: 'driver',
+          password_hash: btoa(newDriver.password),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Driver account created successfully",
+      });
+
+      // Reset form and close dialog
+      setNewDriver({
+        email: '',
+        full_name: '',
+        phone_number: '',
+        password: '',
+        confirmPassword: ''
+      });
+      setShowCreateDriver(false);
+      
+      // Reload drivers
+      loadDrivers();
+    } catch (error: any) {
+      console.error('Error creating driver:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create driver account",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteDriver = async (driverId: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', driverId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Driver deleted successfully",
+      });
+
+      loadDrivers();
+    } catch (error) {
+      console.error('Error deleting driver:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete driver",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Check if user is hotel owner
   if (profile?.role !== 'hotel_owner') {
     return (
@@ -544,6 +657,10 @@ export const HotelDashboard: React.FC = () => {
             <TabsTrigger value="hotels" className="flex items-center gap-2">
               <Building className="h-4 w-4" />
               Hotels & Rooms
+            </TabsTrigger>
+            <TabsTrigger value="drivers" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Drivers
             </TabsTrigger>
             <TabsTrigger value="vehicles" className="flex items-center gap-2">
               <Car className="h-4 w-4" />
@@ -611,6 +728,150 @@ export const HotelDashboard: React.FC = () => {
               onDeleteRoom={handleDeleteRoom}
               isLoading={isLoading}
             />
+          </TabsContent>
+
+          <TabsContent value="drivers" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Your Drivers</h2>
+              <Dialog open={showCreateDriver} onOpenChange={setShowCreateDriver}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Driver
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add New Driver</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="driver-name">Full Name *</Label>
+                      <Input
+                        id="driver-name"
+                        value={newDriver.full_name}
+                        onChange={(e) => setNewDriver({ ...newDriver, full_name: e.target.value })}
+                        placeholder="Enter driver's full name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="driver-email">Email *</Label>
+                      <Input
+                        id="driver-email"
+                        type="email"
+                        value={newDriver.email}
+                        onChange={(e) => setNewDriver({ ...newDriver, email: e.target.value })}
+                        placeholder="Enter driver's email"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="driver-phone">Phone Number</Label>
+                      <Input
+                        id="driver-phone"
+                        type="tel"
+                        value={newDriver.phone_number}
+                        onChange={(e) => setNewDriver({ ...newDriver, phone_number: e.target.value })}
+                        placeholder="Enter driver's phone number"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="driver-password">Password *</Label>
+                      <Input
+                        id="driver-password"
+                        type="password"
+                        value={newDriver.password}
+                        onChange={(e) => setNewDriver({ ...newDriver, password: e.target.value })}
+                        placeholder="Create password (min 8 characters)"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="driver-confirm-password">Confirm Password *</Label>
+                      <Input
+                        id="driver-confirm-password"
+                        type="password"
+                        value={newDriver.confirmPassword}
+                        onChange={(e) => setNewDriver({ ...newDriver, confirmPassword: e.target.value })}
+                        placeholder="Confirm password"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleCreateDriver} disabled={isLoading} className="flex-1">
+                        {isLoading ? 'Creating...' : 'Create Driver'}
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowCreateDriver(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {drivers.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">No drivers added yet</p>
+                  <p className="text-sm text-muted-foreground">Add drivers to manage vehicles and bookings</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {drivers.map((driver) => (
+                  <Card key={driver.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{driver.full_name}</h3>
+                          </div>
+                        </div>
+                        <Badge variant="secondary">Driver</Badge>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Mail className="h-4 w-4" />
+                          <span>{driver.email}</span>
+                        </div>
+                        {driver.phone_number && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <span>📱</span>
+                            <span>{driver.phone_number}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-4">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="w-full">
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the driver account.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteDriver(driver.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="vehicles" className="space-y-6">

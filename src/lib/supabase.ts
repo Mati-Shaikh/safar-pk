@@ -458,6 +458,7 @@ export const createHotel = async (hotelData: {
     .insert({
       ...hotelData,
       rating: 0,
+      approval_status: 'pending',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })

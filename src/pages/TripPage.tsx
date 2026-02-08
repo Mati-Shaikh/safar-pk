@@ -2216,10 +2216,11 @@ export default function TripsPage() {
       try {
         setLoadingHotels(true);
 
-        // Fetch hotels
+        // Fetch hotels (only approved ones)
         const { data: hotelsData, error: hotelsError } = await supabase
           .from('hotels')
           .select('*')
+          .eq('approval_status', 'approved')
           .order('created_at', { ascending: false });
 
         if (hotelsError) {

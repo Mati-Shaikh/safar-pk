@@ -350,6 +350,31 @@ export const HotelManagement: React.FC = () => {
     }
   };
 
+  const handleUpdateHotelApprovalStatus = async (hotelId: string, status: 'pending' | 'approved' | 'rejected') => {
+    try {
+      const { error } = await supabase
+        .from('hotels')
+        .update({ approval_status: status, updated_at: new Date().toISOString() })
+        .eq('id', hotelId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Hotel ${status} successfully`,
+      });
+      
+      fetchHotels();
+    } catch (error) {
+      console.error('Error updating hotel approval status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update hotel approval status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAddRoom = async () => {
     try {
       const { error } = await supabase
@@ -743,6 +768,7 @@ export const HotelManagement: React.FC = () => {
                     <TableHead>Location</TableHead>
                     <TableHead>Images</TableHead>
                     <TableHead>Rating</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -785,9 +811,36 @@ export const HotelManagement: React.FC = () => {
                           <span className="text-yellow-500">★</span>
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={hotel.approval_status === 'approved' ? 'default' : hotel.approval_status === 'rejected' ? 'destructive' : 'secondary'}
+                        >
+                          {hotel.approval_status || 'pending'}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{new Date(hotel.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
+                          {hotel.approval_status !== 'approved' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateHotelApprovalStatus(hotel.id, 'approved')}
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              Approve
+                            </Button>
+                          )}
+                          {hotel.approval_status !== 'rejected' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateHotelApprovalStatus(hotel.id, 'rejected')}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              Reject
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"

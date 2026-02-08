@@ -148,7 +148,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             type="button"
             variant={uploadMode === 'file' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setUploadMode('file')}
+            onClick={() => {
+              setUploadMode('file');
+              if (uploadMode === 'file') {
+                fileInputRef.current?.click();
+              }
+            }}
             disabled={uploading}
           >
             <Upload className="h-4 w-4 mr-1" />

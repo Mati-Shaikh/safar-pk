@@ -29,7 +29,7 @@ export default function PartnerAuthForm() {
     confirmPassword: '',
     full_name: '',
     phone_number: '',
-    role: '' as UserRole
+    role: UserRole.HOTEL_OWNER as UserRole
   });
 
   // Login state
@@ -99,12 +99,6 @@ export default function PartnerAuthForm() {
       return;
     }
 
-    if (!signupData.role) {
-      setError('Please select your partner type');
-      setLoading(false);
-      return;
-    }
-
     if (signupData.password !== signupData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -143,7 +137,7 @@ export default function PartnerAuthForm() {
           confirmPassword: '',
           full_name: '',
           phone_number: '',
-          role: '' as UserRole
+          role: UserRole.HOTEL_OWNER as UserRole
         });
 
         // Show success dialog
@@ -305,22 +299,6 @@ export default function PartnerAuthForm() {
                   />
                 </div>
                 <p className="text-xs text-gray-500">At least one contact method (email or phone) is required</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role">
-                  Partner Type <span className="text-red-500">*</span>
-                </Label>
-                <Select value={signupData.role} onValueChange={handleRoleChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your partner type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={UserRole.HOTEL_OWNER}>Hotel Owner</SelectItem>
-                    <SelectItem value={UserRole.DRIVER}>Driver</SelectItem>
-                    {/* <SelectItem value={UserRole.ADMIN}>Admin</SelectItem> */}
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="space-y-2">
