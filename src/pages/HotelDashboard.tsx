@@ -82,7 +82,9 @@ export const HotelDashboard: React.FC = () => {
     full_name: '',
     phone_number: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    cnic_front_image: [] as string[],
+    cnic_back_image: [] as string[]
   });
   const [featureInput, setFeatureInput] = useState('');
 
@@ -526,6 +528,15 @@ export const HotelDashboard: React.FC = () => {
       return;
     }
 
+    if (newDriver.cnic_front_image.length === 0 || newDriver.cnic_back_image.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please upload both CNIC front and back images",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (newDriver.password !== newDriver.confirmPassword) {
       toast({
         title: "Error",
@@ -546,7 +557,7 @@ export const HotelDashboard: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Create driver user profile
+      // Create driver user profile with CNIC images
       const { data, error } = await supabase
         .from('user_profiles')
         .insert({
@@ -555,6 +566,8 @@ export const HotelDashboard: React.FC = () => {
           phone_number: newDriver.phone_number || null,
           role: 'driver',
           password_hash: btoa(newDriver.password),
+          cnic_front_image: newDriver.cnic_front_image[0] || null,
+          cnic_back_image: newDriver.cnic_back_image[0] || null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -574,7 +587,9 @@ export const HotelDashboard: React.FC = () => {
         full_name: '',
         phone_number: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        cnic_front_image: [],
+        cnic_back_image: []
       });
       setShowCreateDriver(false);
       
@@ -740,7 +755,7 @@ export const HotelDashboard: React.FC = () => {
                     Add Driver
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Add New Driver</DialogTitle>
                   </DialogHeader>
@@ -794,6 +809,30 @@ export const HotelDashboard: React.FC = () => {
                         placeholder="Confirm password"
                       />
                     </div>
+                    <div>
+                      <ImageUpload
+                        images={newDriver.cnic_front_image}
+                        onImagesChange={(images) => setNewDriver({ ...newDriver, cnic_front_image: images })}
+                        maxImages={1}
+                        label="CNIC Front Image *"
+                        bucket="hotel-images"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload a clear photo of the front side of the driver's CNIC
+                      </p>
+                    </div>
+                    <div>
+                      <ImageUpload
+                        images={newDriver.cnic_back_image}
+                        onImagesChange={(images) => setNewDriver({ ...newDriver, cnic_back_image: images })}
+                        maxImages={1}
+                        label="CNIC Back Image *"
+                        bucket="hotel-images"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload a clear photo of the back side of the driver's CNIC
+                      </p>
+                    </div>
                     <div className="flex gap-2">
                       <Button onClick={handleCreateDriver} disabled={isLoading} className="flex-1">
                         {isLoading ? 'Creating...' : 'Create Driver'}
@@ -843,6 +882,35 @@ export const HotelDashboard: React.FC = () => {
                           </div>
                         )}
                       </div>
+                      {(driver.cnic_front_image || driver.cnic_back_image) && (
+                        <div className="mt-3 border-t pt-3">
+                          <p className="text-xs font-medium text-muted-foreground mb-2">CNIC Documents</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {driver.cnic_front_image && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Front</p>
+                                <img
+                                  src={driver.cnic_front_image}
+                                  alt="CNIC Front"
+                                  className="w-full h-20 object-cover rounded border cursor-pointer"
+                                  onClick={() => window.open(driver.cnic_front_image, '_blank')}
+                                />
+                              </div>
+                            )}
+                            {driver.cnic_back_image && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Back</p>
+                                <img
+                                  src={driver.cnic_back_image}
+                                  alt="CNIC Back"
+                                  className="w-full h-20 object-cover rounded border cursor-pointer"
+                                  onClick={() => window.open(driver.cnic_back_image, '_blank')}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       <div className="mt-4">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>

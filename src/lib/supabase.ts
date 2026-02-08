@@ -44,6 +44,8 @@ export interface UserProfile {
   role: UserRole
   avatar_url?: string
   password_hash?: string
+  cnic_front_image?: string
+  cnic_back_image?: string
   created_at: string
   updated_at: string
 }
