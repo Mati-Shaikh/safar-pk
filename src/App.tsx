@@ -19,6 +19,7 @@ import { ComingSoon } from "./pages/ComingSoon";
 import CustomerTerms from "./pages/CustomerTerms";
 import PartnerTerms from "./pages/PartnerTerm";
 import ResetPassword from "./pages/ResetPassword";
+import AccountDetails from "./pages/AccountDetails";
 import { UserRole } from "./lib/supabase";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,9 @@ const AppContent = () => {
 
         {/* Password Reset */}
         <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Account Details */}
+        <Route path="/account" element={<AccountDetails />} />
 
         {/* Dashboard route - always available, handles auth internally */}
         <Route path="/dashboard" element={getDashboard()} />

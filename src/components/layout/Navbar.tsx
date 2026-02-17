@@ -91,11 +91,11 @@ export const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-3 lg:space-x-4">
             {user && profile ? (
               <div className="flex items-center space-x-2 lg:space-x-4">
-                <div className="flex items-center space-x-2">
+                <Link to="/account" className="flex items-center space-x-2 hover:text-primary transition-colors">
                   <User className="h-4 w-4" />
                   <span className="text-sm lg:text-base">{profile.full_name}</span>
                   <span className="text-xs text-muted-foreground">({getRoleName(profile.role)})</span>
-                </div>
+                </Link>
                 <Button variant="outline" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
@@ -196,13 +196,17 @@ export const Navbar: React.FC = () => {
 
               {user && profile ? (
                 <div className="px-3 py-3 border-t border-gray-200 mt-3 space-y-2">
-                  <div className="flex items-center space-x-2 mb-3">
+                  <Link
+                    to="/account"
+                    className="flex items-center space-x-2 mb-3 hover:text-primary transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
                     <User className="h-5 w-5 text-gray-600" />
                     <div>
                       <p className="text-sm font-medium">{profile.full_name}</p>
                       <p className="text-xs text-muted-foreground">{getRoleName(profile.role)}</p>
                     </div>
-                  </div>
+                  </Link>
                   <Button
                     variant="outline"
                     size="sm"
