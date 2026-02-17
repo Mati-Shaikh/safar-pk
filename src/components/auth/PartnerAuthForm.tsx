@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,13 +9,17 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Eye, EyeOff, Mail, Lock, User, Phone, Briefcase, UserCircle, CheckCircle2 } from 'lucide-react';
 import { signUp, signIn, UserRole, supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import ForgotPasswordForm from './ForgotPasswordForm';
 
 export default function PartnerAuthForm() {
   const { refreshAuth } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>('signup');
+  const [searchParams] = useSearchParams();
+  
+  // Get mode from URL params, default to 'login'
+  const urlMode = searchParams.get('mode') as 'login' | 'signup' | null;
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>(urlMode === 'signup' ? 'signup' : 'login');
 
   // Terms and Conditions text - stored as variables
   const TERMS_TEXT = "By creating an account, you agree to our";
@@ -381,7 +385,10 @@ export default function PartnerAuthForm() {
                   Already have a partner account?{' '}
                   <button
                     type="button"
-                    onClick={() => setMode('login')}
+                    onClick={() => {
+                      setMode('login');
+                      navigate('/partner', { replace: true });
+                    }}
                     className="text-green-600 hover:text-green-800 font-medium"
                   >
                     Sign in here
@@ -471,7 +478,10 @@ export default function PartnerAuthForm() {
                   Don't have a partner account?{' '}
                   <button
                     type="button"
-                    onClick={() => setMode('signup')}
+                    onClick={() => {
+                      setMode('signup');
+                      navigate('/partner?mode=signup', { replace: true });
+                    }}
                     className="text-green-600 hover:text-green-800 font-medium"
                   >
                     Register here
