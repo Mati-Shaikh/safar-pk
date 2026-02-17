@@ -10,10 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building, Plus, Edit, Trash2, Search, Bed, Image, X, ExternalLink, Car } from 'lucide-react';
+import { Building, Plus, Edit, Trash2, Search, Bed, Image, X, ExternalLink, Car, Eye } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/hotel/ImageUpload';
+import { sendNewHotelNotification } from '@/lib/emailNotifications';
 
 const AVAILABLE_AMENITIES = [
   'WiFi',
@@ -103,6 +104,7 @@ export const HotelManagement: React.FC = () => {
   const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
   const [editingRoom, setEditingRoom] = useState<HotelRoom | null>(null);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [previewHotel, setPreviewHotel] = useState<Hotel | null>(null);
   const [selectedHotel, setSelectedHotel] = useState<string>('');
   const [selectedHotelForVehicles, setSelectedHotelForVehicles] = useState<string>('');
   const [newHotel, setNewHotel] = useState({
@@ -119,7 +121,7 @@ export const HotelManagement: React.FC = () => {
     type: '',
     description: '',
     price_per_night: 0,
-    capacity: 1,
+    capacity: '1',
     amenities: [] as string[],
     images: [] as string[],
     available: true
@@ -264,9 +266,11 @@ export const HotelManagement: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('hotels')
-        .insert([newHotel]);
+        .insert([newHotel])
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -274,6 +278,24 @@ export const HotelManagement: React.FC = () => {
         title: "Success",
         description: "Hotel added successfully",
       });
+
+      // Send notification about new hotel
+      if (data) {
+        sendNewHotelNotification({
+          id: data.id,
+          name: newHotel.name,
+          location: newHotel.location,
+          owner_id: newHotel.owner_id,
+          description: newHotel.description,
+          rating: newHotel.rating
+        }).then(result => {
+          if (result.success) {
+            console.log('✅ Hotel notification sent successfully');
+          } else {
+            console.warn('⚠️ Failed to send hotel notification:', result.error);
+          }
+        });
+      }
 
       setNewHotel({
         owner_id: '',
@@ -377,9 +399,13 @@ export const HotelManagement: React.FC = () => {
 
   const handleAddRoom = async () => {
     try {
+      const roomData = {
+        ...newRoom,
+        capacity: parseInt(newRoom.capacity) || 1
+      };
       const { error } = await supabase
         .from('hotel_rooms')
-        .insert([newRoom]);
+        .insert([roomData]);
 
       if (error) throw error;
 
@@ -393,7 +419,7 @@ export const HotelManagement: React.FC = () => {
         type: '',
         description: '',
         price_per_night: 0,
-        capacity: 1,
+        capacity: '1',
         amenities: [],
         images: [],
         available: true
@@ -416,9 +442,13 @@ export const HotelManagement: React.FC = () => {
     if (!editingRoom) return;
 
     try {
+      const roomData = {
+        ...editingRoom,
+        capacity: typeof editingRoom.capacity === 'string' ? parseInt(editingRoom.capacity) : editingRoom.capacity
+      };
       const { error } = await supabase
         .from('hotel_rooms')
-        .update(editingRoom)
+        .update(roomData)
         .eq('id', editingRoom.id);
 
       if (error) throw error;
@@ -845,6 +875,17 @@ export const HotelManagement: React.FC = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => {
+                              setPreviewHotel(hotel);
+                              fetchRooms(hotel.id);
+                            }}
+                            title="Preview Hotel"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
                               setEditingHotel(hotel);
                               setIsEditHotelDialogOpen(true);
                             }}
@@ -943,9 +984,19 @@ export const HotelManagement: React.FC = () => {
                             <Label htmlFor="room-capacity">Capacity</Label>
                             <Input
                               id="room-capacity"
-                              type="number"
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
                               value={newRoom.capacity}
-                              onChange={(e) => setNewRoom({ ...newRoom, capacity: parseInt(e.target.value) || 1 })}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[^0-9]/g, '');
+                                setNewRoom({ ...newRoom, capacity: value });
+                              }}
+                              onBlur={(e) => {
+                                if (!e.target.value || parseInt(e.target.value) <= 0) {
+                                  setNewRoom({ ...newRoom, capacity: '1' });
+                                }
+                              }}
                             />
                           </div>
                         </div>
@@ -1052,7 +1103,10 @@ export const HotelManagement: React.FC = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                setEditingRoom(room);
+                                setEditingRoom({
+                                  ...room,
+                                  capacity: room.capacity.toString()
+                                });
                                 setIsEditRoomDialogOpen(true);
                               }}
                             >
@@ -1438,9 +1492,19 @@ export const HotelManagement: React.FC = () => {
                   <Label htmlFor="edit-room-capacity">Capacity</Label>
                   <Input
                     id="edit-room-capacity"
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={editingRoom.capacity}
-                    onChange={(e) => setEditingRoom({ ...editingRoom, capacity: parseInt(e.target.value) || 1 })}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      setEditingRoom({ ...editingRoom, capacity: value });
+                    }}
+                    onBlur={(e) => {
+                      if (!e.target.value || parseInt(e.target.value) <= 0) {
+                        setEditingRoom({ ...editingRoom, capacity: '1' });
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -1569,6 +1633,191 @@ export const HotelManagement: React.FC = () => {
             </Button>
             <Button onClick={handleEditVehicle}>Update Vehicle</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Hotel Dialog */}
+      <Dialog open={!!previewHotel} onOpenChange={() => setPreviewHotel(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              Hotel Preview
+            </DialogTitle>
+          </DialogHeader>
+          {previewHotel && (
+            <div className="space-y-6">
+              {/* Hotel Info */}
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold">{previewHotel.name}</h3>
+                <p className="text-muted-foreground">{previewHotel.location}</p>
+                {previewHotel.description && (
+                  <p className="text-sm">{previewHotel.description}</p>
+                )}
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    variant={previewHotel.approval_status === 'approved' ? 'default' : previewHotel.approval_status === 'rejected' ? 'destructive' : 'secondary'}
+                  >
+                    {previewHotel.approval_status || 'pending'}
+                  </Badge>
+                  <div className="flex items-center gap-1">
+                    <span className="font-semibold">{previewHotel.rating}</span>
+                    <span className="text-yellow-500">★</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hotel Images */}
+              {previewHotel.images.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3">Images</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {previewHotel.images.map((image, index) => (
+                      <img
+                        key={index}
+                        src={image}
+                        alt={`${previewHotel.name} image ${index + 1}`}
+                        className="w-full h-40 object-cover rounded-lg border"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder.svg';
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Amenities */}
+              {previewHotel.amenities.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3">Amenities</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {previewHotel.amenities.map((amenity, index) => (
+                      <Badge key={index} variant="secondary">
+                        {amenity}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Hotel Rooms */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Bed className="h-4 w-4" />
+                  Rooms ({rooms.filter(r => r.hotel_id === previewHotel.id).length})
+                </h4>
+                {rooms.filter(r => r.hotel_id === previewHotel.id).length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {rooms.filter(r => r.hotel_id === previewHotel.id).map((room) => (
+                      <Card key={room.id}>
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h5 className="font-medium text-lg">{room.type}</h5>
+                                <p className="text-sm text-muted-foreground font-semibold">
+                                  PKR {room.price_per_night.toLocaleString()}/night
+                                </p>
+                              </div>
+                              <Badge variant={room.available ? "default" : "secondary"}>
+                                {room.available ? "Available" : "Unavailable"}
+                              </Badge>
+                            </div>
+                            
+                            <p className="text-sm">
+                              <span className="font-medium">Capacity:</span> {room.capacity} guests
+                            </p>
+                            
+                            {room.description && (
+                              <p className="text-sm text-muted-foreground">{room.description}</p>
+                            )}
+                            
+                            {room.amenities.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium mb-1">Amenities:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {room.amenities.slice(0, 6).map((amenity, index) => (
+                                    <Badge key={index} variant="outline" className="text-xs">
+                                      {amenity}
+                                    </Badge>
+                                  ))}
+                                  {room.amenities.length > 6 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{room.amenities.length - 6} more
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Room Images */}
+                            {room.images.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium mb-2">Room Images:</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {room.images.slice(0, 4).map((image, index) => (
+                                    <img
+                                      key={index}
+                                      src={image}
+                                      alt={`${room.type} image ${index + 1}`}
+                                      className="w-full h-24 object-cover rounded border"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = '/placeholder.svg';
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                                {room.images.length > 4 && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    +{room.images.length - 4} more images
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Bed className="h-8 w-8 mx-auto mb-2" />
+                    <p>No rooms added yet</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Preview Actions */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                {previewHotel.approval_status !== 'approved' && (
+                  <Button
+                    onClick={() => {
+                      handleUpdateHotelApprovalStatus(previewHotel.id, 'approved');
+                      setPreviewHotel(null);
+                    }}
+                    className="text-green-600 hover:text-green-700"
+                    variant="outline"
+                  >
+                    Approve Hotel
+                  </Button>
+                )}
+                {previewHotel.approval_status !== 'rejected' && (
+                  <Button
+                    onClick={() => {
+                      handleUpdateHotelApprovalStatus(previewHotel.id, 'rejected');
+                      setPreviewHotel(null);
+                    }}
+                    className="text-red-600 hover:text-red-700"
+                    variant="outline"
+                  >
+                    Reject Hotel
+                  </Button>
+                )}
+                <Button onClick={() => setPreviewHotel(null)}>Close</Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

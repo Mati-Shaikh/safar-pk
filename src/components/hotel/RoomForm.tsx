@@ -62,7 +62,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({
     type: room?.type || '',
     description: room?.description || '',
     price_per_night: room?.price_per_night?.toString() || '',
-    capacity: room?.capacity || 1,
+    capacity: room?.capacity?.toString() || '1',
     amenities: room?.amenities || [],
     images: room?.images || [],
     available: room?.available ?? true
@@ -88,18 +88,24 @@ export const RoomForm: React.FC<RoomFormProps> = ({
   };
 
   const handleSubmit = () => {
-    if (formData.type.trim() && formData.price_per_night.trim() && formData.capacity > 0) {
+    const capacityNum = parseInt(formData.capacity);
+    if (formData.type.trim() && formData.price_per_night.trim() && capacityNum > 0) {
       // Only pass pricing data if it has been configured
       const hasPricingConfig = pricingData && (
         (pricingData.off_season_months && pricingData.off_season_months.length > 0) ||
         (pricingData.on_season_months && pricingData.on_season_months.length > 0) ||
         (pricingData.closed_months && pricingData.closed_months.length > 0)
       );
-      onSubmit(formData, hasPricingConfig ? pricingData : undefined);
+      const submitData = {
+        ...formData,
+        capacity: capacityNum,
+        price_per_night: parseFloat(formData.price_per_night)
+      };
+      onSubmit(submitData, hasPricingConfig ? pricingData : undefined);
     }
   };
 
-  const isFormValid = formData.type.trim() && formData.price_per_night.trim() && formData.capacity > 0;
+  const isFormValid = formData.type.trim() && formData.price_per_night.trim() && parseInt(formData.capacity) > 0;
 
   return (
     <div className="space-y-6">
@@ -131,10 +137,19 @@ export const RoomForm: React.FC<RoomFormProps> = ({
               <Label htmlFor="capacity">Capacity *</Label>
               <Input
                 id="capacity"
-                type="number"
-                min="1"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={formData.capacity}
-                onChange={(e) => handleInputChange('capacity', parseInt(e.target.value) || 1)}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  handleInputChange('capacity', value);
+                }}
+                onBlur={(e) => {
+                  if (!e.target.value || parseInt(e.target.value) <= 0) {
+                    handleInputChange('capacity', '1');
+                  }
+                }}
                 placeholder="Number of guests"
                 required
               />
