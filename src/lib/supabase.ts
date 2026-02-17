@@ -142,6 +142,51 @@ export const customSignUp = async (email: string, password: string, userData: {
       } else if (authData.user) {
         userId = authData.user.id
         console.log('✅ User created in Supabase Auth with ID:', userId)
+        
+        // The trigger already created the user_profiles record, so just verify and return
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select()
+          .eq('id', userId)
+          .single()
+        
+        if (profileError || !profileData) {
+          console.error('❌ Profile not created by trigger, creating manually')
+          // Fallback: create profile manually if trigger failed
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .insert({
+              id: userId,
+              email: email || null,
+              full_name: userData.full_name,
+              phone_number: userData.phone_number || null,
+              role: userData.role,
+              password_hash: btoa(password),
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select()
+            .single()
+
+          if (error) {
+            console.error('Custom signup failed:', error)
+            return { data: null, error }
+          }
+        }
+        
+        console.log('✅ User profile verified/created successfully')
+        
+        // Create a mock user object similar to Supabase auth
+        const mockUser = {
+          id: userId,
+          email: email || userData.phone_number,
+          user_metadata: userData
+        }
+
+        return {
+          data: { user: mockUser },
+          error: null
+        }
       } else {
         console.warn('⚠️ No user returned from Supabase Auth, generating UUID')
         userId = crypto.randomUUID()
@@ -151,7 +196,7 @@ export const customSignUp = async (email: string, password: string, userData: {
       userId = crypto.randomUUID()
     }
 
-    // Step 2: Create user in user_profiles table (for custom auth)
+    // Step 2: Create user in user_profiles table (for custom auth - only for phone-only users)
     const { data, error } = await supabase
       .from('user_profiles')
       .insert({

@@ -34,6 +34,7 @@ export interface Hotel {
   amenities: string[];
   images: string[];
   rating: number;
+  approval_status?: 'pending' | 'approved' | 'rejected';
   created_at: string;
   updated_at: string;
 }

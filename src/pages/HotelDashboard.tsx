@@ -558,9 +558,11 @@ export const HotelDashboard: React.FC = () => {
     setIsLoading(true);
     try {
       // Create driver user profile with CNIC images
+      const driverId = crypto.randomUUID();
       const { data, error } = await supabase
         .from('user_profiles')
         .insert({
+          id: driverId,
           email: newDriver.email,
           full_name: newDriver.full_name,
           phone_number: newDriver.phone_number || null,
