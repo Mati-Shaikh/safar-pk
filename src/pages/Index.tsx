@@ -14,7 +14,7 @@ const destinations = [
     description: 'The stunning valley known for its breathtaking mountain views and rich culture.',
     rating: 4.8,
     reviews: 1247,
-    price: 'From $299',
+    price: 'From PKR 29,900',
     duration: '3-5 days'
   },
   {
@@ -24,7 +24,7 @@ const destinations = [
     description: 'The Switzerland of Pakistan with lush green valleys and pristine lakes.',
     rating: 4.6,
     reviews: 892,
-    price: 'From $199',
+    price: 'From PKR 19,900',
     duration: '2-4 days'
   },
   {
@@ -34,7 +34,7 @@ const destinations = [
     description: 'Gateway to the world\'s highest peaks and crystal clear lakes.',
     rating: 4.9,
     reviews: 1563,
-    price: 'From $399',
+    price: 'From PKR 39,900',
     duration: '4-7 days'
   },
   {
@@ -44,7 +44,7 @@ const destinations = [
     description: 'Paradise on earth with snow-capped peaks and alpine meadows.',
     rating: 4.7,
     reviews: 1034,
-    price: 'From $249',
+    price: 'From PKR 24,900',
     duration: '3-6 days'
   }
 ];

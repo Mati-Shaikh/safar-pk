@@ -256,7 +256,7 @@ export const HotelList: React.FC<HotelListProps> = ({
                             <div>
                               <h5 className="font-medium">{room.type}</h5>
                               <p className="text-sm text-muted-foreground">
-                                ${room.price_per_night}/night
+                                PKR {room.price_per_night}/night
                               </p>
                             </div>
                             <div className="flex gap-1">
