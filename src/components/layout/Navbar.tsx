@@ -67,24 +67,17 @@ export const Navbar: React.FC = () => {
             <Link to="/" className={getNavLinkClass("/")}>
               Home
             </Link>
-            <Link to="/destinations" className={getNavLinkClass("/destinations")}>
-              Destinations
-            </Link>
-            {/* Hide My Trips for customers - they see Coming Soon page instead */}
-            {/* {(!user || !profile || profile.role !== UserRole.CUSTOMER) && (
-              <Link to="/trip" className={getNavLinkClass("/trip")}>
-                My Trips
-              </Link>
-            )} */}
-            {/* Show Dashboard link for all logged in users */}
-            {user && profile && (
-              <Link to="/dashboard" className={getNavLinkClass("/dashboard")}>
-                Dashboard
-              </Link>
+            {/* Show Destinations and Dashboard only for non-customers */}
+            {user && profile && profile.role !== UserRole.CUSTOMER && (
+              <>
+                <Link to="/destinations" className={getNavLinkClass("/destinations")}>
+                  Destinations
+                </Link>
+                <Link to="/dashboard" className={getNavLinkClass("/dashboard")}>
+                  Dashboard
+                </Link>
+              </>
             )}
-            {/* <Link to="/map" className={getNavLinkClass("/map")}>
-              Map
-            </Link> */}
           </div>
 
           {/* Desktop Auth Buttons */}
@@ -148,22 +141,24 @@ export const Navbar: React.FC = () => {
               >
                 Home
               </Link>
-              <Link
-                to="/destinations"
-                className={getNavLinkClass("/destinations", true)}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Destinations
-              </Link>
-              {/* Show Dashboard link for all logged in users */}
-              {user && profile && (
-                <Link
-                  to="/dashboard"
-                  className={getNavLinkClass("/dashboard", true)}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
+              {/* Show Destinations and Dashboard only for non-customers */}
+              {user && profile && profile.role !== UserRole.CUSTOMER && (
+                <>
+                  <Link
+                    to="/destinations"
+                    className={getNavLinkClass("/destinations", true)}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Destinations
+                  </Link>
+                  <Link
+                    to="/dashboard"
+                    className={getNavLinkClass("/dashboard", true)}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                </>
               )}
 
               {!user && (

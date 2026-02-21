@@ -16,6 +16,7 @@ import { DriverDashboard } from "./pages/DriverDashboard";
 import { HotelDashboard } from "./pages/HotelDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { ComingSoon } from "./pages/ComingSoon";
+import CustomerWaitlist from "./pages/CustomerWaitlist";
 import CustomerTerms from "./pages/CustomerTerms";
 import PartnerTerms from "./pages/PartnerTerm";
 import ResetPassword from "./pages/ResetPassword";
@@ -38,15 +39,18 @@ const AppContent = () => {
     );
   }
 
+  // Check if user is a customer and redirect to waitlist
+  const isCustomer = profile?.role === UserRole.CUSTOMER;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<Index />} />
-        <Route path="/destinations" element={<Destinations />} />
-        <Route path="/trip" element={<TripPage />} />
-        <Route path="/map" element={<Map />} />
+        <Route path="/" element={(!user || isCustomer) ? <CustomerWaitlist /> : <Index />} />
+        <Route path="/destinations" element={isCustomer ? <CustomerWaitlist /> : <Destinations />} />
+        <Route path="/trip" element={isCustomer ? <CustomerWaitlist /> : <TripPage />} />
+        <Route path="/map" element={isCustomer ? <CustomerWaitlist /> : <Map />} />
         <Route path="/partner" element={<Partner />} />
         
         {/* Terms & Conditions */}
@@ -73,7 +77,7 @@ const AppContent = () => {
 
     switch (profile.role) {
       case UserRole.CUSTOMER:
-        return <TripPage />;
+        return <CustomerWaitlist />;
       case UserRole.DRIVER:
         return <DriverDashboard />;
       case UserRole.HOTEL_OWNER:
