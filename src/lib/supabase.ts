@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://pxttisquctjfzeukypga.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4dHRpc3F1Y3RqZnpldWt5cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4MTgzNTYsImV4cCI6MjA3NDM5NDM1Nn0.1kLdqTJqi20XFwEgfN7nVKpEmUAzk2mXPdxiVn08OVE';
+export const supabaseUrl = 'https://pxttisquctjfzeukypga.supabase.co'
+export const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4dHRpc3F1Y3RqZnpldWt5cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4MTgzNTYsImV4cCI6MjA3NDM5NDM1Nn0.1kLdqTJqi20XFwEgfN7nVKpEmUAzk2mXPdxiVn08OVE';
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -1265,6 +1265,11 @@ export const uploadImage = async (
   fileName?: string
 ): Promise<UploadImageResult> => {
   try {
+    console.log('=== UPLOAD DEBUG START ===');
+    console.log('Bucket name:', bucket);
+    console.log('Bucket type:', typeof bucket);
+    console.log('File:', file instanceof File ? file.name : 'Blob', 'Size:', file.size, 'Type:', file.type);
+    
     // Generate unique filename if not provided
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 9);
@@ -1272,8 +1277,12 @@ export const uploadImage = async (
       ? file.name.split('.').pop() 
       : 'jpg';
     const finalFileName = fileName || `image-${timestamp}-${random}.${extension}`;
+    
+    console.log('Upload filename:', finalFileName);
+    console.log('Supabase URL:', supabaseUrl);
 
     // Upload to Supabase Storage
+    console.log('Calling supabase.storage.from()...');
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(finalFileName, file, {
@@ -1281,15 +1290,29 @@ export const uploadImage = async (
         upsert: false
       });
 
+    console.log('Upload response - data:', data, 'error:', error);
+
     if (error) {
-      console.error('Upload error:', error);
+      console.error('❌ Upload error details:', {
+        message: error.message,
+        name: error.name,
+        statusCode: (error as any).statusCode,
+        bucket: bucket,
+        fileName: finalFileName,
+        fullError: error
+      });
       return { url: '', path: '', error: error.message };
     }
+
+    console.log('✅ Upload successful, getting public URL...');
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from(bucket)
       .getPublicUrl(data.path);
+
+    console.log('✅ Public URL:', publicUrl);
+    console.log('=== UPLOAD DEBUG END ===');
 
     return {
       url: publicUrl,
@@ -1297,7 +1320,7 @@ export const uploadImage = async (
       error: undefined
     };
   } catch (err) {
-    console.error('Unexpected upload error:', err);
+    console.error('❌ Unexpected upload error:', err);
     return { 
       url: '', 
       path: '', 

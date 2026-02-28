@@ -14,7 +14,7 @@ interface ImageUploadProps {
   onImagesChange: (images: string[]) => void;
   maxImages?: number;
   label?: string;
-  bucket: StorageBucket;
+  bucket?: StorageBucket;
 }
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -24,6 +24,16 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   label = "Images",
   bucket
 }) => {
+  // AUTO-DETECT bucket from label if not provided
+  const actualBucket: StorageBucket = bucket || 
+    (label?.toLowerCase().includes('vehicle') ? 'vehicle-images' : 
+     label?.toLowerCase().includes('hotel') || label?.toLowerCase().includes('room') ? 'hotel-images' :
+     label?.toLowerCase().includes('destination') ? 'destination-images' :
+     label?.toLowerCase().includes('trip') ? 'trip-images' : 
+     'hotel-images'); // default fallback
+
+  console.log('🔧 ImageUpload:', { label, providedBucket: bucket, actualBucket });
+  
   const [newImageUrl, setNewImageUrl] = useState('');
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
   const [uploading, setUploading] = useState(false);
@@ -48,6 +58,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    console.log('🔍 ImageUpload - bucket prop value:', bucket);
+    console.log('🔍 ImageUpload - bucket type:', typeof bucket);
 
     setError(null);
     setUploading(true);
@@ -79,8 +92,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         // Generate unique filename
         const uniqueFileName = generateUniqueFileName(file.name);
 
+        console.log('🔍 About to call uploadImage with bucket:', bucket);
+
         // Upload to Supabase Storage
-        const result = await uploadImage(compressedBlob, bucket, uniqueFileName);
+        const result = await uploadImage(compressedBlob, actualBucket, uniqueFileName);
 
         if (result.error) {
           errors.push(`${file.name}: ${result.error}`);
