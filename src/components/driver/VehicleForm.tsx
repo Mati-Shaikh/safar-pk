@@ -75,8 +75,8 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     type: '',
-    seats: 4,
-    price_per_day: 0,
+    seats: '4',
+    price_per_day: '',
     description: '',
     features: [] as string[],
     images: [] as string[],
@@ -92,8 +92,8 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
       setFormData({
         name: vehicle.name,
         type: vehicle.type,
-        seats: vehicle.seats,
-        price_per_day: vehicle.price_per_day,
+        seats: vehicle.seats.toString(),
+        price_per_day: vehicle.price_per_day.toString(),
         description: vehicle.description || '',
         features: vehicle.features,
         images: vehicle.images,
@@ -112,8 +112,8 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
       setFormData({
         name: '',
         type: '',
-        seats: 4,
-        price_per_day: 0,
+        seats: '4',
+        price_per_day: '',
         description: '',
         features: [],
         images: [],
@@ -132,8 +132,8 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
         driver_id: driverId,
         name: formData.name,
         type: formData.type,
-        seats: formData.seats,
-        price_per_day: formData.price_per_day,
+        seats: parseInt(formData.seats),
+        price_per_day: parseFloat(formData.price_per_day),
         description: formData.description,
         features: formData.features,
         images: formData.images,
@@ -239,11 +239,20 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
               <Label htmlFor="seats">Number of Seats</Label>
               <Input
                 id="seats"
-                type="number"
-                min="1"
-                max="50"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={formData.seats}
-                onChange={(e) => setFormData(prev => ({ ...prev, seats: parseInt(e.target.value) || 4 }))}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  setFormData(prev => ({ ...prev, seats: value }));
+                }}
+                onBlur={(e) => {
+                  if (!e.target.value || parseInt(e.target.value) <= 0) {
+                    setFormData(prev => ({ ...prev, seats: '4' }));
+                  }
+                }}
+                placeholder="e.g., 4"
                 required
               />
             </div>
@@ -253,10 +262,17 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
               <Input
                 id="price"
                 type="number"
+                step="1"
                 min="0"
-                step="100"
                 value={formData.price_per_day}
-                onChange={(e) => setFormData(prev => ({ ...prev, price_per_day: parseFloat(e.target.value) || 0 }))}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow integers (no decimals)
+                  if (value === '' || /^\d+$/.test(value)) {
+                    setFormData(prev => ({ ...prev, price_per_day: value }));
+                  }
+                }}
+                placeholder="e.g., 5000"
                 required
               />
             </div>
@@ -320,7 +336,7 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
             onImagesChange={handleImagesChange}
             maxImages={10}
             label="Vehicle Images"
-            bucket="vehicle-images"
+            bucket={'vehicle-images'}
           />
           
           {/* Pricing Configuration Section */}

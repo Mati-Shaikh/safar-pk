@@ -46,8 +46,8 @@ export const VehicleManagement: React.FC = () => {
     driver_id: '',
     name: '',
     type: '',
-    seats: 4,
-    price_per_day: 0,
+    seats: '4',
+    price_per_day: '',
     description: '',
     features: [] as string[],
     images: [] as string[],
@@ -107,9 +107,15 @@ export const VehicleManagement: React.FC = () => {
 
   const handleAddVehicle = async () => {
     try {
+      const vehicleData = {
+        ...newVehicle,
+        seats: parseInt(newVehicle.seats),
+        price_per_day: parseFloat(newVehicle.price_per_day)
+      };
+      
       const { error } = await supabase
         .from('vehicles')
-        .insert([newVehicle]);
+        .insert([vehicleData]);
 
       if (error) throw error;
 
@@ -122,8 +128,8 @@ export const VehicleManagement: React.FC = () => {
         driver_id: '',
         name: '',
         type: '',
-        seats: 4,
-        price_per_day: 0,
+        seats: '4',
+        price_per_day: '',
         description: '',
         features: [],
         images: [],
@@ -313,9 +319,20 @@ export const VehicleManagement: React.FC = () => {
                       <Label htmlFor="seats">Seats</Label>
                       <Input
                         id="seats"
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={newVehicle.seats}
-                        onChange={(e) => setNewVehicle({ ...newVehicle, seats: parseInt(e.target.value) || 0 })}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, '');
+                          setNewVehicle({ ...newVehicle, seats: value });
+                        }}
+                        onBlur={(e) => {
+                          if (!e.target.value || parseInt(e.target.value) <= 0) {
+                            setNewVehicle({ ...newVehicle, seats: '4' });
+                          }
+                        }}
+                        placeholder="e.g., 4"
                       />
                     </div>
                     <div>
@@ -323,8 +340,17 @@ export const VehicleManagement: React.FC = () => {
                       <Input
                         id="price"
                         type="number"
+                        step="1"
+                        min="0"
                         value={newVehicle.price_per_day}
-                        onChange={(e) => setNewVehicle({ ...newVehicle, price_per_day: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Only allow integers (no decimals)
+                          if (value === '' || /^\d+$/.test(value)) {
+                            setNewVehicle({ ...newVehicle, price_per_day: value });
+                          }
+                        }}
+                        placeholder="e.g., 5000"
                       />
                     </div>
                   </div>
@@ -474,9 +500,20 @@ export const VehicleManagement: React.FC = () => {
                   <Label htmlFor="edit-seats">Seats</Label>
                   <Input
                     id="edit-seats"
-                    type="number"
-                    value={editingVehicle.seats}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, seats: parseInt(e.target.value) || 0 })}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={editingVehicle.seats.toString()}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      setEditingVehicle({ ...editingVehicle, seats: parseInt(value) || 4 });
+                    }}
+                    onBlur={(e) => {
+                      if (!e.target.value || parseInt(e.target.value) <= 0) {
+                        setEditingVehicle({ ...editingVehicle, seats: 4 });
+                      }
+                    }}
+                    placeholder="e.g., 4"
                   />
                 </div>
                 <div>
@@ -484,8 +521,17 @@ export const VehicleManagement: React.FC = () => {
                   <Input
                     id="edit-price"
                     type="number"
-                    value={editingVehicle.price_per_day}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, price_per_day: parseFloat(e.target.value) || 0 })}
+                    step="1"
+                    min="0"
+                    value={editingVehicle.price_per_day.toString()}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Only allow integers (no decimals)
+                      if (value === '' || /^\d+$/.test(value)) {
+                        setEditingVehicle({ ...editingVehicle, price_per_day: parseFloat(value) || 0 });
+                      }
+                    }}
+                    placeholder="e.g., 5000"
                   />
                 </div>
               </div>
