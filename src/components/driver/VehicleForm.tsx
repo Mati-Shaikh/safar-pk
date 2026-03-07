@@ -128,28 +128,39 @@ export const VehicleForm: React.FC<VehicleFormProps> = ({
     setLoading(true);
 
     try {
-      const vehicleData = {
-        driver_id: driverId,
-        name: formData.name,
-        type: formData.type,
-        seats: parseInt(formData.seats),
-        price_per_day: parseFloat(formData.price_per_day),
-        description: formData.description,
-        features: formData.features,
-        images: formData.images,
-        available: formData.available
-      };
-
       let vehicleId: string;
       
       if (vehicle) {
-        await updateVehicle(vehicle.id, vehicleData);
+        // Don't include driver_id when updating - it should not change
+        const updateData = {
+          name: formData.name,
+          type: formData.type,
+          seats: parseInt(formData.seats),
+          price_per_day: parseFloat(formData.price_per_day),
+          description: formData.description,
+          features: formData.features,
+          images: formData.images,
+          available: formData.available
+        };
+        await updateVehicle(vehicle.id, updateData);
         vehicleId = vehicle.id;
         toast({
           title: "Vehicle Updated",
           description: "Vehicle information has been updated successfully.",
         });
       } else {
+        // Include driver_id only when creating a new vehicle
+        const vehicleData = {
+          driver_id: driverId,
+          name: formData.name,
+          type: formData.type,
+          seats: parseInt(formData.seats),
+          price_per_day: parseFloat(formData.price_per_day),
+          description: formData.description,
+          features: formData.features,
+          images: formData.images,
+          available: formData.available
+        };
         const result = await createVehicle(vehicleData);
         vehicleId = result.data?.id;
         toast({
