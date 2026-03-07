@@ -452,9 +452,21 @@ export const HotelDashboard: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // Only send the fields that should be updated, excluding id, timestamps, and driver_id
+      const updateData = {
+        name: editingVehicle.name,
+        type: editingVehicle.type,
+        seats: editingVehicle.seats,
+        price_per_day: editingVehicle.price_per_day,
+        description: editingVehicle.description,
+        features: editingVehicle.features,
+        images: editingVehicle.images,
+        available: editingVehicle.available
+      };
+
       const { error } = await supabase
         .from('vehicles')
-        .update(editingVehicle)
+        .update(updateData)
         .eq('id', editingVehicle.id);
 
       if (error) throw error;
@@ -1140,7 +1152,7 @@ export const HotelDashboard: React.FC = () => {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Dialog>
+                        <Dialog open={editingVehicle?.id === vehicle.id} onOpenChange={(open) => !open && setEditingVehicle(null)}>
                           <DialogTrigger asChild>
                             <Button variant="outline" size="sm" className="flex-1" onClick={() => setEditingVehicle(vehicle)}>
                               <Edit className="h-4 w-4 mr-1" />
@@ -1151,7 +1163,7 @@ export const HotelDashboard: React.FC = () => {
                             <DialogHeader>
                               <DialogTitle>Edit Vehicle</DialogTitle>
                             </DialogHeader>
-                            {editingVehicle && (
+                            {editingVehicle && editingVehicle.id === vehicle.id && (
                               <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
