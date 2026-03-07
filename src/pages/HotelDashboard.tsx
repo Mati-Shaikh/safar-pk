@@ -338,6 +338,242 @@ const HotelPreviewModal: React.FC<{
   );
 };
 
+// Vehicle Image Gallery Component for Preview
+const VehicleImageGallery: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % vehicle.images.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + vehicle.images.length) % vehicle.images.length);
+  };
+
+  const goToImage = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex(index);
+  };
+
+  if (!vehicle.images || vehicle.images.length === 0) {
+    return (
+      <div className="w-full h-96 bg-gray-100 rounded-t-lg flex items-center justify-center">
+        <Car className="h-16 w-16 text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative group">
+      <img
+        src={vehicle.images[currentImageIndex]}
+        alt={`${vehicle.name} - Image ${currentImageIndex + 1}`}
+        className="w-full h-96 object-cover rounded-t-lg"
+      />
+
+      {/* Seats Badge */}
+      <div className="absolute top-4 left-4">
+        <Badge variant="secondary" className="bg-white/90 text-black flex items-center gap-1">
+          <User className="h-3 w-3" />
+          {vehicle.seats} Seats
+        </Badge>
+      </div>
+
+      {/* Available Badge */}
+      <div className="absolute top-4 right-4">
+        <Badge className={vehicle.available ? 'bg-green-500' : 'bg-gray-500'}>
+          {vehicle.available ? 'Available' : 'Not Available'}
+        </Badge>
+      </div>
+
+      {/* Navigation Arrows */}
+      {vehicle.images.length > 1 && (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-8 w-8"
+            onClick={prevImage}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-8 w-8"
+            onClick={nextImage}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </>
+      )}
+
+      {/* Image Dots */}
+      {vehicle.images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1">
+          {vehicle.images.map((_, index) => (
+            <button
+              key={index}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+              }`}
+              onClick={(e) => goToImage(index, e)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Image Counter */}
+      <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded">
+        {currentImageIndex + 1} / {vehicle.images.length}
+      </div>
+    </div>
+  );
+};
+
+// Vehicle Preview Modal Component
+const VehiclePreviewModal: React.FC<{
+  vehicle: Vehicle | null;
+  isOpen: boolean;
+  onClose: () => void;
+}> = ({ vehicle, isOpen, onClose }) => {
+  if (!vehicle) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <Eye className="h-6 w-6 text-primary" />
+            Customer Preview - {vehicle.name}
+          </DialogTitle>
+          <DialogDescription>
+            This is how customers will see your vehicle when booking transportation
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Vehicle Images */}
+          <VehicleImageGallery vehicle={vehicle} />
+
+          {/* Vehicle Details Card */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-6">
+                {/* Header */}
+                <div>
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <h2 className="text-3xl font-bold text-gray-800 mb-1">{vehicle.name}</h2>
+                      <p className="text-lg text-gray-600">{vehicle.type}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-gray-800">PKR {vehicle.price_per_day.toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">per day</div>
+                    </div>
+                  </div>
+                  {vehicle.description && (
+                    <p className="text-gray-600 mt-3">{vehicle.description}</p>
+                  )}
+                </div>
+
+                {/* Vehicle Specs */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="text-center">
+                    <div className="flex justify-center mb-2">
+                      <User className="h-6 w-6 text-gray-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-gray-800">{vehicle.seats}</div>
+                    <div className="text-xs text-gray-600">Seats</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex justify-center mb-2">
+                      <Car className="h-6 w-6 text-gray-600" />
+                    </div>
+                    <div className="text-sm font-semibold text-gray-800">{vehicle.type}</div>
+                    <div className="text-xs text-gray-600">Type</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex justify-center mb-2">
+                      <Settings className="h-6 w-6 text-gray-600" />
+                    </div>
+                    <div className="text-sm font-semibold text-gray-800">
+                      {vehicle.features.length > 0 ? `${vehicle.features.length} Features` : 'Standard'}
+                    </div>
+                    <div className="text-xs text-gray-600">Amenities</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex justify-center mb-2">
+                      <Badge className={vehicle.available ? 'bg-green-500' : 'bg-gray-500'}>
+                        {vehicle.available ? '✓' : '✗'}
+                      </Badge>
+                    </div>
+                    <div className="text-sm font-semibold text-gray-800">
+                      {vehicle.available ? 'Available' : 'Unavailable'}
+                    </div>
+                    <div className="text-xs text-gray-600">Status</div>
+                  </div>
+                </div>
+
+                {/* Features */}
+                {vehicle.features && vehicle.features.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <Settings className="h-5 w-5" />
+                      Vehicle Features & Amenities
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {vehicle.features.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                          <div className="h-2 w-2 bg-blue-600 rounded-full"></div>
+                          <span className="text-sm text-gray-700">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Call to Action */}
+                <div className="border-t pt-6">
+                  <Button className="w-full bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800 h-12 text-lg">
+                    <Car className="h-5 w-5 mr-2" />
+                    Book This Vehicle
+                  </Button>
+                  <p className="text-xs text-center text-gray-500 mt-2">
+                    This is how the booking button appears to customers
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Preview Notice */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Eye className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-blue-900 mb-1">Preview Mode</h4>
+                <p className="text-sm text-blue-700">
+                  This is exactly how customers will see your vehicle when selecting transportation for their trips. 
+                  Make sure all details are accurate, images are clear, and features are up-to-date.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={onClose} className="bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800">
+            Close Preview
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export const HotelDashboard: React.FC = () => {
   const { bookings, updateBooking } = useData();
   const { user, profile } = useAuth();
@@ -357,6 +593,8 @@ export const HotelDashboard: React.FC = () => {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [previewHotel, setPreviewHotel] = useState<Hotel | null>(null);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [previewVehicle, setPreviewVehicle] = useState<Vehicle | null>(null);
+  const [vehiclePreviewDialogOpen, setVehiclePreviewDialogOpen] = useState(false);
   const [newVehicle, setNewVehicle] = useState({
     driver_id: '',
     name: '',
@@ -1460,6 +1698,18 @@ export const HotelDashboard: React.FC = () => {
                         )}
                       </div>
                       <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            setPreviewVehicle(vehicle);
+                            setVehiclePreviewDialogOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Preview
+                        </Button>
                         <Dialog open={editingVehicle?.id === vehicle.id} onOpenChange={(open) => !open && setEditingVehicle(null)}>
                           <DialogTrigger asChild>
                             <Button variant="outline" size="sm" className="flex-1" onClick={() => setEditingVehicle(vehicle)}>
@@ -1589,6 +1839,16 @@ export const HotelDashboard: React.FC = () => {
                 ))}
               </div>
             )}
+
+            {/* Vehicle Preview Modal */}
+            <VehiclePreviewModal
+              vehicle={previewVehicle}
+              isOpen={vehiclePreviewDialogOpen}
+              onClose={() => {
+                setVehiclePreviewDialogOpen(false);
+                setPreviewVehicle(null);
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-6">
