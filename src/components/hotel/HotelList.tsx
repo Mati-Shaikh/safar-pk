@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Building, Edit, Trash2, Plus, Bed, Star, MapPin, Wifi, Car, Coffee, Dumbbell, Waves, Utensils } from 'lucide-react';
+import { Building, Edit, Trash2, Plus, Bed, Star, MapPin, Wifi, Car, Coffee, Dumbbell, Waves, Utensils, Eye } from 'lucide-react';
 import { Hotel, HotelRoom, HotelRoomPricing } from '@/types';
 import { HotelForm } from './HotelForm';
 import { RoomForm } from './RoomForm';
@@ -19,6 +19,7 @@ interface HotelListProps {
   onCreateRoom: (hotelId: string, roomData: any, pricingData?: Partial<HotelRoomPricing>) => void;
   onUpdateRoom: (roomId: string, roomData: any, pricingData?: Partial<HotelRoomPricing>) => void;
   onDeleteRoom: (roomId: string) => void;
+  onPreviewHotel?: (hotel: Hotel) => void;
   isLoading?: boolean;
 }
 
@@ -40,6 +41,7 @@ export const HotelList: React.FC<HotelListProps> = ({
   onCreateRoom,
   onUpdateRoom,
   onDeleteRoom,
+  onPreviewHotel,
   isLoading = false
 }) => {
   const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
@@ -139,6 +141,16 @@ export const HotelList: React.FC<HotelListProps> = ({
                 )}
               </div>
               <div className="flex gap-2">
+                {onPreviewHotel && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => onPreviewHotel(hotel)}
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Preview
+                  </Button>
+                )}
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">

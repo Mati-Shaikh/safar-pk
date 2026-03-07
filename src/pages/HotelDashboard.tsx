@@ -3,10 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building, Calendar, User, Mail, Bed, Plus, Settings, Car, Edit, Trash2 } from 'lucide-react';
+import { Building, Calendar, User, Mail, Bed, Plus, Settings, Car, Edit, Trash2, Eye, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,6 +49,295 @@ interface Vehicle {
   updated_at: string;
 }
 
+// Room Image Gallery Component for Preview
+const RoomImageGallery: React.FC<{ room: HotelRoom; selectedRoom: HotelRoom | null }> = ({ room, selectedRoom }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % room.images.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + room.images.length) % room.images.length);
+  };
+
+  const goToImage = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex(index);
+  };
+
+  return (
+    <div className="relative group">
+      <img
+        src={room.images[currentImageIndex] || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'}
+        alt={`${room.type} - Image ${currentImageIndex + 1}`}
+        className="w-full h-64 object-cover rounded-t-lg"
+      />
+
+      {/* Capacity Badge */}
+      <div className="absolute top-4 left-4">
+        <Badge variant="secondary" className="bg-white/90 text-black">
+          {room.capacity} {room.capacity === 1 ? 'Guest' : 'Guests'}
+        </Badge>
+      </div>
+
+      {/* Navigation Arrows */}
+      {room.images.length > 1 && (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-8 w-8"
+            onClick={prevImage}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-8 w-8"
+            onClick={nextImage}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </>
+      )}
+
+      {/* Image Dots */}
+      {room.images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1">
+          {room.images.map((_, index) => (
+            <button
+              key={index}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+              }`}
+              onClick={(e) => goToImage(index, e)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Image Counter */}
+      <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded">
+        {currentImageIndex + 1} / {room.images.length}
+      </div>
+    </div>
+  );
+};
+
+// Hotel Preview Modal Component
+const HotelPreviewModal: React.FC<{
+  hotel: Hotel | null;
+  rooms: HotelRoom[];
+  isOpen: boolean;
+  onClose: () => void;
+}> = ({ hotel, rooms, isOpen, onClose }) => {
+  const [currentRoomIndex, setCurrentRoomIndex] = useState(0);
+  const [selectedRoom, setSelectedRoom] = useState<HotelRoom | null>(null);
+
+  if (!hotel) return null;
+
+  const hotelRooms = rooms.filter(room => room.available);
+
+  const nextRoom = () => {
+    setCurrentRoomIndex((prev) => (prev + 1) % hotelRooms.length);
+  };
+
+  const prevRoom = () => {
+    setCurrentRoomIndex((prev) => (prev - 1 + hotelRooms.length) % hotelRooms.length);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <Eye className="h-6 w-6 text-primary" />
+            Customer Preview - {hotel.name}
+          </DialogTitle>
+          <DialogDescription>
+            This is how customers will see your hotel and rooms
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Hotel Information */}
+        <div className="space-y-6">
+          {/* Hotel Header */}
+          <div className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-lg border">
+            <div className="flex items-start gap-4">
+              {hotel.images && hotel.images.length > 0 && (
+                <img
+                  src={hotel.images[0]}
+                  alt={hotel.name}
+                  className="w-32 h-32 object-cover rounded-lg"
+                />
+              )}
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">{hotel.name}</h2>
+                <div className="flex items-center gap-2 text-gray-600 mb-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>{hotel.address}</span>
+                </div>
+                <p className="text-gray-600 text-sm">{hotel.description}</p>
+                {hotel.amenities && hotel.amenities.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {hotel.amenities.map((amenity, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {amenity}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Rooms Section */}
+          {hotelRooms.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <Bed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 mb-2">No available rooms</p>
+              <p className="text-sm text-gray-500">Add rooms to show them to customers</p>
+            </div>
+          ) : (
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">Available Rooms</h3>
+              
+              {/* Room Carousel */}
+              <div className="relative">
+                <div className="overflow-hidden rounded-lg">
+                  <div
+                    className="flex transition-transform duration-300 ease-in-out"
+                    style={{ transform: `translateX(-${currentRoomIndex * 100}%)` }}
+                  >
+                    {hotelRooms.map((room) => (
+                      <div key={room.id} className="w-full flex-shrink-0">
+                        <Card
+                          className={`cursor-pointer transition-all duration-300 border-2 ${
+                            selectedRoom?.id === room.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          onClick={() => setSelectedRoom(room)}
+                        >
+                          <div className="relative">
+                            <RoomImageGallery room={room} selectedRoom={selectedRoom} />
+                          </div>
+
+                          <CardContent className="p-6">
+                            <div className="space-y-4">
+                              <div>
+                                <h3 className="text-2xl font-bold text-gray-800">{room.type}</h3>
+                                <p className="text-sm text-gray-500 mt-2">{room.description}</p>
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <span className="text-3xl font-bold text-gray-800">PKR {room.price_per_night?.toLocaleString() || 'N/A'}</span>
+                                <span className="text-sm text-gray-500">per night</span>
+                              </div>
+
+                              <div>
+                                <h4 className="font-medium text-gray-700 mb-2">Amenities:</h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {room.amenities && room.amenities.length > 0 ? (
+                                    room.amenities.map((amenity, index) => (
+                                      <Badge key={index} variant="outline" className="text-xs">
+                                        {amenity}
+                                      </Badge>
+                                    ))
+                                  ) : (
+                                    <span className="text-sm text-gray-400">No amenities listed</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="pt-4 border-t">
+                                <Button
+                                  className="w-full bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedRoom(room);
+                                  }}
+                                >
+                                  {selectedRoom?.id === room.id ? 'Selected' : 'Select This Room'}
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Navigation buttons */}
+                {hotelRooms.length > 1 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white z-10"
+                      onClick={prevRoom}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white z-10"
+                      onClick={nextRoom}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+
+                {/* Dots indicator */}
+                {hotelRooms.length > 1 && (
+                  <div className="flex justify-center mt-4 space-x-2">
+                    {hotelRooms.map((_, index) => (
+                      <button
+                        key={index}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          index === currentRoomIndex ? 'bg-blue-500' : 'bg-gray-300'
+                        }`}
+                        onClick={() => setCurrentRoomIndex(index)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Preview Notice */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Eye className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-blue-900 mb-1">Preview Mode</h4>
+                <p className="text-sm text-blue-700">
+                  This is exactly how customers will see your hotel and rooms when booking their trips. 
+                  Make sure all information is accurate and images are high quality.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={onClose} className="bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-900 hover:to-gray-800">
+            Close Preview
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export const HotelDashboard: React.FC = () => {
   const { bookings, updateBooking } = useData();
   const { user, profile } = useAuth();
@@ -66,6 +355,8 @@ export const HotelDashboard: React.FC = () => {
   const [showCreateVehicle, setShowCreateVehicle] = useState(false);
   const [showCreateDriver, setShowCreateDriver] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [previewHotel, setPreviewHotel] = useState<Hotel | null>(null);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [newVehicle, setNewVehicle] = useState({
     driver_id: '',
     name: '',
@@ -752,6 +1043,7 @@ export const HotelDashboard: React.FC = () => {
               </Dialog>
             </div>
 
+            <div className="space-y-4">
             <HotelList
               hotels={hotels}
               rooms={rooms}
@@ -761,8 +1053,24 @@ export const HotelDashboard: React.FC = () => {
               onCreateRoom={handleCreateRoom}
               onUpdateRoom={handleUpdateRoom}
               onDeleteRoom={handleDeleteRoom}
+              onPreviewHotel={(hotel) => {
+                setPreviewHotel(hotel);
+                setPreviewDialogOpen(true);
+              }}
               isLoading={isLoading}
             />
+
+            {/* Preview Modal */}
+            <HotelPreviewModal
+              hotel={previewHotel}
+              rooms={previewHotel ? (rooms[previewHotel.id] || []) : []}
+              isOpen={previewDialogOpen}
+              onClose={() => {
+                setPreviewDialogOpen(false);
+                setPreviewHotel(null);
+              }}
+            />
+            </div>
           </TabsContent>
 
           <TabsContent value="drivers" className="space-y-6">
